@@ -4,181 +4,211 @@
 "id": "1",
 "name": "Radio Campus 47 (Radio Campus Agen)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-47",
-"websiteUrl": "https://radiocampus47.fr/"
+"websiteUrl": "https://radiocampus47.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=radiocampus47.fr&sz=256"
 },
 {
 "id": "2",
 "name": "Radio Campus Amiens",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-amiens-amiens",
-"websiteUrl": "http://www.radiocampusamiens.fr/"
+"websiteUrl": "http://www.radiocampusamiens.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampusamiens.fr&sz=256"
 },
 {
 "id": "3",
 "name": "Radio Campus Angers",
 "streamUrl": "http://radiocampus.fr/audio/live/radio-campus-angers",
-"websiteUrl": "https://www.radiocampusangers.com/"
+"websiteUrl": "https://www.radiocampusangers.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampusangers.com&sz=256"
 },
 {
 "id": "4",
 "name": "Radio Campus Avignon",
 "streamUrl": "http://live.radio-campus.org:8000/avignon",
-"websiteUrl": "https://avignon.radiocampus.fr/"
+"websiteUrl": "https://avignon.radiocampus.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=avignon.radiocampus.fr&sz=256"
 },
 {
 "id": "5",
 "name": "Radio Campus Besançon",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-besancon",
-"websiteUrl": "https://campusbesancon.fr/"
+"websiteUrl": "https://campusbesancon.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=campusbesancon.fr&sz=256"
 },
 {
 "id": "6",
 "name": "Radio Campus Bordeaux",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-bordeaux",
-"websiteUrl": "https://www.radiocampusbordeaux.fr/"
+"websiteUrl": "https://www.radiocampusbordeaux.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampusbordeaux.fr&sz=256"
 },
 {
 "id": "7",
 "name": "Radio U (Radio Campus Brest)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/programmationatradio-u-org",
-"websiteUrl": "https://www.radio-u.org/"
+"websiteUrl": "https://www.radio-u.org/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radio-u.org&sz=256"
 },
 {
 "id": "8",
 "name": "Radio Phénix (Radio Campus Caen)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-phenix",
-"websiteUrl": "https://phenix.fm/"
+"websiteUrl": "https://phenix.fm/",
+"logo": "https://www.google.com/s2/favicons?domain=phenix.fm&sz=256"
 },
 {
 "id": "9",
 "name": "Radiom (Radio Campus Castres)",
 "streamUrl": "http://live.radiom.fr/live320.mp3",
-"websiteUrl": "https://www.radiom.fr/"
+"websiteUrl": "https://www.radiom.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiom.fr&sz=256"
 },
 {
 "id": "10",
 "name": "Radio Campus Clermont-Ferrand",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-clermont-ferrand",
-"websiteUrl": "https://campus-clermont.net/"
+"websiteUrl": "https://campus-clermont.net/",
+"logo": "https://www.google.com/s2/favicons?domain=campus-clermont.net&sz=256"
 },
 {
 "id": "11",
 "name": "Radio Cortes",
 "streamUrl": null,
-"websiteUrl": null
+"websiteUrl": null,
+"logo": "https://placehold.co/256x256?text=Radio+Cortes"
 },
 {
 "id": "12",
 "name": "Radio Dijon Campus",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-dijon-campus",
-"websiteUrl": "https://radiodijoncampus.com/"
+"websiteUrl": "https://radiodijoncampus.com/",
+"logo": "https://www.google.com/s2/favicons?domain=radiodijoncampus.com&sz=256"
 },
 {
 "id": "13",
 "name": "Radio Campus Grenoble",
 "streamUrl": "http://live.campusgrenoble.org/rcg112",
-"websiteUrl": "https://campusgrenoble.org/"
+"websiteUrl": "https://campusgrenoble.org/",
+"logo": "https://www.google.com/s2/favicons?domain=campusgrenoble.org&sz=256"
 },
 {
 "id": "14",
 "name": "Radio Campus Lille",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-lille",
-"websiteUrl": "https://www.campuslille.com/"
+"websiteUrl": "https://www.campuslille.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.campuslille.com&sz=256"
 },
 {
 "id": "15",
 "name": "Radio Campus Troyes",
 "streamUrl": null,
-"websiteUrl": null
+"websiteUrl": null,
+"logo": "https://placehold.co/256x256?text=Campus+Troyes"
 },
 {
 "id": "16",
 "name": "Radio Campus Tours",
 "streamUrl": "http://mixie.fr:8000/webradiocampustours",
-"websiteUrl": "https://www.radiocampustours.com/"
+"websiteUrl": "https://www.radiocampustours.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampustours.com&sz=256"
 },
 {
 "id": "17",
 "name": "Campus FM (Radio Campus Toulouse)",
 "streamUrl": "http://live.radio-campus.org:8000/toulouse",
-"websiteUrl": "https://www.campusfm.net/"
+"websiteUrl": "https://www.campusfm.net/",
+"logo": "https://www.google.com/s2/favicons?domain=www.campusfm.net&sz=256"
 },
 {
 "id": "18",
 "name": "Radio en Construction (Radio Campus Strasbourg)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-en-construction",
-"websiteUrl": "https://www.radioenconstruction.com/"
+"websiteUrl": "https://www.radioenconstruction.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radioenconstruction.com&sz=256"
 },
 {
 "id": "19",
 "name": "Radio Campus Rouen",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-rouen",
-"websiteUrl": "https://www.facebook.com/rcrouen/"
+"websiteUrl": "https://www.facebook.com/rcrouen/",
+"logo": "https://www.google.com/s2/favicons?domain=www.facebook.com&sz=256"
 },
 {
 "id": "20",
 "name": "C Lab (Radio Campus Rennes)",
 "streamUrl": "https://www.c-lab.fr/stream/",
-"websiteUrl": "https://www.c-lab.fr/"
+"websiteUrl": "https://www.c-lab.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.c-lab.fr&sz=256"
 },
 {
 "id": "21",
 "name": "Radio Pulsar (Radio Campus Poitiers)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-pulsar-poitiers",
-"websiteUrl": "https://www.radio-pulsar.org/"
+"websiteUrl": "https://www.radio-pulsar.org/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radio-pulsar.org&sz=256"
 },
 {
 "id": "22",
 "name": "Radio Campus Perpignan",
 "streamUrl": null,
-"websiteUrl": null
+"websiteUrl": null,
+"logo": "https://placehold.co/256x256?text=Campus+Perpignan"
 },
 {
 "id": "23",
 "name": "Radio Campus Pau",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-pau",
-"websiteUrl": "https://radiocampuspau.fr/"
+"websiteUrl": "https://radiocampuspau.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=radiocampuspau.fr&sz=256"
 },
 {
 "id": "24",
 "name": "Radio Campus Paris",
 "streamUrl": "http://www.radiocampus.fr/audio/live/www-radiocampusparis-org",
-"websiteUrl": "https://www.radiocampusparis.org/"
+"websiteUrl": "https://www.radiocampusparis.org/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampusparis.org&sz=256"
 },
 {
 "id": "25",
 "name": "Radio Campus Orléans",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-orleans",
-"websiteUrl": "https://orleans.radiocampus.org/"
+"websiteUrl": "https://orleans.radiocampus.org/",
+"logo": "https://www.google.com/s2/favicons?domain=orleans.radiocampus.org&sz=256"
 },
 {
 "id": "26",
 "name": "Radio MNE (Radio Campus Mulhouse)",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-mne-mulhouse",
-"websiteUrl": "https://www.radiomne.com/"
+"websiteUrl": "https://www.radiomne.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiomne.com&sz=256"
 },
 {
 "id": "27",
 "name": "Radio Campus Montpellier",
 "streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-montpellier",
-"websiteUrl": "https://www.radiocampusmontpellier.fr/"
+"websiteUrl": "https://www.radiocampusmontpellier.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampusmontpellier.fr&sz=256"
 },
 {
 "id": "28",
 "name": "Radio Grenouille (Radio Campus Marseille)",
 "streamUrl": "https://live.radiogrenouille.com:8443/live",
-"websiteUrl": "https://www.radiogrenouille.com/"
+"websiteUrl": "https://www.radiogrenouille.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiogrenouille.com&sz=256"
 },
 {
 "id": "29",
 "name": "Radio Brume (Radio Campus Lyon)",
 "streamUrl": "http://listen.radioking.com/radio/489875/stream/546695",
-"websiteUrl": "https://www.radiobrume.fr/"
+"websiteUrl": "https://www.radiobrume.fr/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiobrume.fr&sz=256"
 },
 {
 "id": "30",
 "name": "Radio Campus Lorraine",
 "streamUrl": "http://streaming.radio.co/s072797b7e/listen",
-"websiteUrl": "https://www.radiocampuslorraine.com/"
+"websiteUrl": "https://www.radiocampuslorraine.com/",
+"logo": "https://www.google.com/s2/favicons?domain=www.radiocampuslorraine.com&sz=256"
 }
 ],
 "podcasts": [

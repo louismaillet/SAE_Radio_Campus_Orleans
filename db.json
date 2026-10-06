@@ -1,0 +1,254 @@
+{
+"radios": [
+{
+"id": "1",
+"name": "Radio Campus 47 (Radio Campus Agen)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-47",
+"websiteUrl": "https://radiocampus47.fr/"
+},
+{
+"id": "2",
+"name": "Radio Campus Amiens",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-amiens-amiens",
+"websiteUrl": "http://www.radiocampusamiens.fr/"
+},
+{
+"id": "3",
+"name": "Radio Campus Angers",
+"streamUrl": "http://radiocampus.fr/audio/live/radio-campus-angers",
+"websiteUrl": "https://www.radiocampusangers.com/"
+},
+{
+"id": "4",
+"name": "Radio Campus Avignon",
+"streamUrl": "http://live.radio-campus.org:8000/avignon",
+"websiteUrl": "https://avignon.radiocampus.fr/"
+},
+{
+"id": "5",
+"name": "Radio Campus Besançon",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-besancon",
+"websiteUrl": "https://campusbesancon.fr/"
+},
+{
+"id": "6",
+"name": "Radio Campus Bordeaux",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-bordeaux",
+"websiteUrl": "https://www.radiocampusbordeaux.fr/"
+},
+{
+"id": "7",
+"name": "Radio U (Radio Campus Brest)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/programmationatradio-u-org",
+"websiteUrl": "https://www.radio-u.org/"
+},
+{
+"id": "8",
+"name": "Radio Phénix (Radio Campus Caen)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-phenix",
+"websiteUrl": "https://phenix.fm/"
+},
+{
+"id": "9",
+"name": "Radiom (Radio Campus Castres)",
+"streamUrl": "http://live.radiom.fr/live320.mp3",
+"websiteUrl": "https://www.radiom.fr/"
+},
+{
+"id": "10",
+"name": "Radio Campus Clermont-Ferrand",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-clermont-ferrand",
+"websiteUrl": "https://campus-clermont.net/"
+},
+{
+"id": "11",
+"name": "Radio Cortes",
+"streamUrl": null,
+"websiteUrl": null
+},
+{
+"id": "12",
+"name": "Radio Dijon Campus",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-dijon-campus",
+"websiteUrl": "https://radiodijoncampus.com/"
+},
+{
+"id": "13",
+"name": "Radio Campus Grenoble",
+"streamUrl": "http://live.campusgrenoble.org/rcg112",
+"websiteUrl": "https://campusgrenoble.org/"
+},
+{
+"id": "14",
+"name": "Radio Campus Lille",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-lille",
+"websiteUrl": "https://www.campuslille.com/"
+},
+{
+"id": "15",
+"name": "Radio Campus Troyes",
+"streamUrl": null,
+"websiteUrl": null
+},
+{
+"id": "16",
+"name": "Radio Campus Tours",
+"streamUrl": "http://mixie.fr:8000/webradiocampustours",
+"websiteUrl": "https://www.radiocampustours.com/"
+},
+{
+"id": "17",
+"name": "Campus FM (Radio Campus Toulouse)",
+"streamUrl": "http://live.radio-campus.org:8000/toulouse",
+"websiteUrl": "https://www.campusfm.net/"
+},
+{
+"id": "18",
+"name": "Radio en Construction (Radio Campus Strasbourg)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-en-construction",
+"websiteUrl": "https://www.radioenconstruction.com/"
+},
+{
+"id": "19",
+"name": "Radio Campus Rouen",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-rouen",
+"websiteUrl": "https://www.facebook.com/rcrouen/"
+},
+{
+"id": "20",
+"name": "C Lab (Radio Campus Rennes)",
+"streamUrl": "https://www.c-lab.fr/stream/",
+"websiteUrl": "https://www.c-lab.fr/"
+},
+{
+"id": "21",
+"name": "Radio Pulsar (Radio Campus Poitiers)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-pulsar-poitiers",
+"websiteUrl": "https://www.radio-pulsar.org/"
+},
+{
+"id": "22",
+"name": "Radio Campus Perpignan",
+"streamUrl": null,
+"websiteUrl": null
+},
+{
+"id": "23",
+"name": "Radio Campus Pau",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-pau",
+"websiteUrl": "https://radiocampuspau.fr/"
+},
+{
+"id": "24",
+"name": "Radio Campus Paris",
+"streamUrl": "http://www.radiocampus.fr/audio/live/www-radiocampusparis-org",
+"websiteUrl": "https://www.radiocampusparis.org/"
+},
+{
+"id": "25",
+"name": "Radio Campus Orléans",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-orleans",
+"websiteUrl": "https://orleans.radiocampus.org/"
+},
+{
+"id": "26",
+"name": "Radio MNE (Radio Campus Mulhouse)",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-mne-mulhouse",
+"websiteUrl": "https://www.radiomne.com/"
+},
+{
+"id": "27",
+"name": "Radio Campus Montpellier",
+"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-montpellier",
+"websiteUrl": "https://www.radiocampusmontpellier.fr/"
+},
+{
+"id": "28",
+"name": "Radio Grenouille (Radio Campus Marseille)",
+"streamUrl": "https://live.radiogrenouille.com:8443/live",
+"websiteUrl": "https://www.radiogrenouille.com/"
+},
+{
+"id": "29",
+"name": "Radio Brume (Radio Campus Lyon)",
+"streamUrl": "http://listen.radioking.com/radio/489875/stream/546695",
+"websiteUrl": "https://www.radiobrume.fr/"
+},
+{
+"id": "30",
+"name": "Radio Campus Lorraine",
+"streamUrl": "http://streaming.radio.co/s072797b7e/listen",
+"websiteUrl": "https://www.radiocampuslorraine.com/"
+}
+],
+"podcasts": [
+{
+"id": "101",
+"radioId": "24",
+"title": "La Matinale Étudiante",
+"description": "Retour sur les mobilisations étudiantes de la semaine, avec des invités en plateau pour débattre de la précarité et des solutions à l'échelle locale.",
+"duration": "45:12",
+"publishedAt": "2026-10-05T08:00:00Z",
+"audioUrl": "https://fakeaudio.radiocampus.fr/podcast-101.mp3"
+},
+{
+"id": "102",
+"radioId": "24",
+"title": "Underground Session #42",
+"description": "Une heure de découverte musicale dédiée à la scène techno émergente francilienne. Mix exclusif de DJ Fictive.",
+"duration": "59:30",
+"publishedAt": "2026-10-02T22:00:00Z",
+"audioUrl": "https://fakeaudio.radiocampus.fr/podcast-102.mp3"
+},
+{
+"id": "103",
+"radioId": "25",
+"title": "Ciné-Campus",
+"description": "L'équipe d'Orléans décortique les sorties ciné de la semaine. Focus spécial sur le festival du film de genre.",
+"duration": "32:15",
+"publishedAt": "2026-10-04T18:00:00Z",
+"audioUrl": "https://fakeaudio.radiocampus.fr/podcast-103.mp3"
+},
+{
+"id": "104",
+"radioId": "6",
+"title": "Les Vignes du Savoir",
+"description": "Rencontre avec des chercheurs de l'Université de Bordeaux sur l'impact du réchauffement climatique sur les vignobles.",
+"duration": "50:00",
+"publishedAt": "2026-09-28T14:30:00Z",
+"audioUrl": "https://fakeaudio.radiocampus.fr/podcast-104.mp3"
+},
+{
+"id": "105",
+"radioId": "12",
+"title": "Campus Sport",
+"description": "Débrief complet du derby universitaire de rugby et interview de la capitaine de l'équipe féminine de basket de Dijon.",
+"duration": "28:40",
+"publishedAt": "2026-10-01T19:00:00Z",
+"audioUrl": "https://fakeaudio.radiocampus.fr/podcast-105.mp3"
+}
+],
+"news": [
+{
+"id": "201",
+"radioId": "24",
+"title": "De nouveaux studios pour la rentrée !",
+"content": "Après des mois de travaux, Radio Campus Paris inaugure ses nouveaux locaux. Plus d'espace, du matériel flambant neuf, et de quoi accueillir du public pour des émissions en direct !",
+"date": "2026-09-15"
+},
+{
+"id": "202",
+"radioId": "25",
+"title": "Campagne de recrutement 2026 : Rejoignez-nous !",
+"content": "Vous êtes étudiant à Orléans et vous avez envie de faire de la radio ? Que ce soit pour animer, réaliser ou faire du journalisme, nos portes ouvertes auront lieu le 10 octobre. Venez nombreux !",
+"date": "2026-10-01"
+},
+{
+"id": "203",
+"radioId": "6",
+"title": "Le festival 'Ondes de Choc' débarque à Bordeaux",
+"content": "Radio Campus Bordeaux est partenaire exclusif du festival 'Ondes de Choc'. Gagnez vos places toute la semaine en écoutant la matinale !",
+"date": "2026-10-06"
+}
+]
+}

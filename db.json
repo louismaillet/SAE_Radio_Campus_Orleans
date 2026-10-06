@@ -31,28 +31,28 @@
 {
 "id": "5",
 "name": "Radio Campus Besançon",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-besancon",
+"streamUrl": "http://cdnradio.streamakaci.com/campusbesancon.mp3",
 "websiteUrl": "https://campusbesancon.fr/",
 "logo": "https://www.google.com/s2/favicons?domain=campusbesancon.fr&sz=256"
 },
 {
 "id": "6",
 "name": "Radio Campus Bordeaux",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-bordeaux",
+"streamUrl": "http://live.radiocampus.fr:8000/campus-bordeaux",
 "websiteUrl": "https://www.radiocampusbordeaux.fr/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radiocampusbordeaux.fr&sz=256"
 },
 {
 "id": "7",
 "name": "Radio U (Radio Campus Brest)",
-"streamUrl": "http://www.radiocampus.fr/audio/live/programmationatradio-u-org",
+"streamUrl": "http://icecast.infini.fr:8000/radiou.mp3",
 "websiteUrl": "https://www.radio-u.org/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radio-u.org&sz=256"
 },
 {
 "id": "8",
 "name": "Radio Phénix (Radio Campus Caen)",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-phenix",
+"streamUrl": "https://live.radio-campus.org:8002/caen.mp3",
 "websiteUrl": "https://phenix.fm/",
 "logo": "https://www.google.com/s2/favicons?domain=phenix.fm&sz=256"
 },
@@ -80,7 +80,7 @@
 {
 "id": "12",
 "name": "Radio Dijon Campus",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-dijon-campus",
+"streamUrl": "http://frequence.u-bourgogne.fr:8082/dijoncampus",
 "websiteUrl": "https://radiodijoncampus.com/",
 "logo": "https://www.google.com/s2/favicons?domain=radiodijoncampus.com&sz=256"
 },
@@ -94,7 +94,7 @@
 {
 "id": "14",
 "name": "Radio Campus Lille",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-lille",
+"streamUrl": "http://broadcast.infomaniak.ch/radiocampuslille-128.mp3",
 "websiteUrl": "https://www.campuslille.com/",
 "logo": "https://www.google.com/s2/favicons?domain=www.campuslille.com&sz=256"
 },
@@ -122,14 +122,14 @@
 {
 "id": "18",
 "name": "Radio en Construction (Radio Campus Strasbourg)",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-en-construction",
+"streamUrl": "http://str0.creacast.com/rec",
 "websiteUrl": "https://www.radioenconstruction.com/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radioenconstruction.com&sz=256"
 },
 {
 "id": "19",
 "name": "Radio Campus Rouen",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-rouen",
+"streamUrl": "http://listen.radioking.com/radio/569657/stream/629603",
 "websiteUrl": "https://www.facebook.com/rcrouen/",
 "logo": "https://www.google.com/s2/favicons?domain=www.facebook.com&sz=256"
 },
@@ -143,7 +143,7 @@
 {
 "id": "21",
 "name": "Radio Pulsar (Radio Campus Poitiers)",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-pulsar-poitiers",
+"streamUrl": "http://radiopulsar.ice.infomaniak.ch/radiopulsar-192.mp3",
 "websiteUrl": "https://www.radio-pulsar.org/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radio-pulsar.org&sz=256"
 },
@@ -157,35 +157,35 @@
 {
 "id": "23",
 "name": "Radio Campus Pau",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-pau",
+"streamUrl": "http://listen.radioking.com/radio/448364/stream/502994",
 "websiteUrl": "https://radiocampuspau.fr/",
 "logo": "https://www.google.com/s2/favicons?domain=radiocampuspau.fr&sz=256"
 },
 {
 "id": "24",
 "name": "Radio Campus Paris",
-"streamUrl": "http://www.radiocampus.fr/audio/live/www-radiocampusparis-org",
+"streamUrl": "https://www.radiocampusparis.org/stream/",
 "websiteUrl": "https://www.radiocampusparis.org/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radiocampusparis.org&sz=256"
 },
 {
 "id": "25",
 "name": "Radio Campus Orléans",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-orleans",
+"streamUrl": "https://streams.labomedia.org:8443/stream_rco",
 "websiteUrl": "https://orleans.radiocampus.org/",
 "logo": "https://www.google.com/s2/favicons?domain=orleans.radiocampus.org&sz=256"
 },
 {
 "id": "26",
 "name": "Radio MNE (Radio Campus Mulhouse)",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-mne-mulhouse",
+"streamUrl": "http://mne.out.airtime.pro/mne_a",
 "websiteUrl": "https://www.radiomne.com/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radiomne.com&sz=256"
 },
 {
 "id": "27",
 "name": "Radio Campus Montpellier",
-"streamUrl": "http://www.radiocampus.fr/audio/live/radio-campus-montpellier",
+"streamUrl": "http://stream.radiocampusmontpellier.fr/rcm_direct",
 "websiteUrl": "https://www.radiocampusmontpellier.fr/",
 "logo": "https://www.google.com/s2/favicons?domain=www.radiocampusmontpellier.fr&sz=256"
 },

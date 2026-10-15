@@ -1,0 +1,98 @@
+# ==========================================
+# Flutter / Dart / Pub
+# ==========================================
+.dart_tool/
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+**/build/
+**/.dart_tool/
+**/.pub/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/doc/api/
+**/coverage/
+**/graphify-out/
+
+# Fichiers de log
+*.log
+*.buildlog
+
+# Archives et fichiers temporaires de la racine
+*.zip
+*.tar.gz
+*.7z
+/db.json # Copie inutilisée à la racine (les vraies données sont dans mon_app/assets/db.json)
+
+# Symbolisation & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# ==========================================
+# Android
+# ==========================================
+**/android/.gradle/
+**/android/captures/
+**/android/gradle-app.setting
+**/android/local.properties
+**/android/app/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# ==========================================
+# Windows
+# ==========================================
+**/windows/flutter/ephemeral/
+*.vcxproj.user
+*.vcxproj.idb
+*.pdb
+*.exe
+*.dll
+
+# ==========================================
+# macOS / iOS / Linux
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/.last_build_id
+**/macos/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# ==========================================
+# IDEs & Editeurs
+# ==========================================
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# Assistants IA & Outils locaux
+.claude/
+.artifacts/
+.widget_preview/
+
+
+*.md
+!README.md

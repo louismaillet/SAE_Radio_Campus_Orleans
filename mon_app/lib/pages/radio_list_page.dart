@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/campus_radio.dart';
-import '../widgets/error_retry.dart';
 import 'radio_details_page.dart';
 
 class RadioListPage extends StatefulWidget {
@@ -20,12 +19,6 @@ class _RadioListPageState extends State<RadioListPage> {
     _radiosFuture = RadioRepository.getRadios();
   }
 
-  void _reload() {
-    setState(() {
-      _radiosFuture = RadioRepository.getRadios();
-    });
-  }
-
   void _openRadio(CampusRadio radio) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)),
@@ -37,13 +30,7 @@ class _RadioListPageState extends State<RadioListPage> {
     if (logoUrl == null) {
       return const Icon(Icons.radio);
     }
-    return Image.network(
-      logoUrl,
-      width: 40,
-      height: 40,
-      // Si l'image ne charge pas, on affiche une icône à la place.
-      errorBuilder: (context, error, stackTrace) => const Icon(Icons.radio),
-    );
+    return Image.network(logoUrl, width: 40, height: 40);
   }
 
   @override
@@ -53,13 +40,10 @@ class _RadioListPageState extends State<RadioListPage> {
       body: FutureBuilder<List<CampusRadio>>(
         future: _radiosFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
-            return ErrorRetry(onRetry: _reload);
-          }
-          final radios = snapshot.data ?? [];
+          final radios = snapshot.data!;
           return ListView.builder(
             itemCount: radios.length,
             itemBuilder: (context, index) {

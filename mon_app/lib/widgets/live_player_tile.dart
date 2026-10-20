@@ -31,18 +31,9 @@ class _LivePlayerTileState extends State<LivePlayerTile> {
       return;
     }
     setState(() => _loading = true);
-    try {
-      await _player.play(UrlSource(widget.streamUrl));
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible de lire le direct de cette radio.')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+    await _player.play(UrlSource(widget.streamUrl));
+    if (mounted) {
+      setState(() => _loading = false);
     }
   }
 

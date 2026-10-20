@@ -32,8 +32,10 @@ dependencies:
     sdk: flutter
 
   webview_all: ^1.4.4
-  url_launcher: ^6.3.3
   audioplayers: ^6.8.1
+  http: ^1.6.0
+  flutter_html: ^3.0.0
+  html: 0.15.5
 
 dev_dependencies:
   flutter_test:
@@ -56,9 +58,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  assets:
-    - assets/db.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

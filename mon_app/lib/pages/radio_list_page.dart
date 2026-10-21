@@ -30,7 +30,12 @@ class _RadioListPageState extends State<RadioListPage> {
     if (logoUrl == null) {
       return const Icon(Icons.radio);
     }
-    return Image.network(logoUrl, width: 40, height: 40);
+    return Image.network(
+      logoUrl,
+      width: 40,
+      height: 40,
+      errorBuilder: (context, error, stackTrace) => const Icon(Icons.radio),
+    );
   }
 
   @override

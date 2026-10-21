@@ -211,7 +211,15 @@ class _ContentViewState extends State<_ContentView> {
     if (imageUrl == null) {
       return const Icon(Icons.image_not_supported, size: 56);
     }
-    return Image.network(imageUrl, width: 56, height: 56, fit: BoxFit.cover);
+    return Image.network(
+      imageUrl,
+      width: 56,
+      height: 56,
+      fit: BoxFit.cover,
+      // Certaines images renvoient une erreur 404 : on affiche l'icône à la place.
+      errorBuilder: (context, error, stackTrace) =>
+          const Icon(Icons.image_not_supported, size: 56),
+    );
   }
 
   // Une ligne de contenu. Les podcasts ont un bouton lecture/arrêt.

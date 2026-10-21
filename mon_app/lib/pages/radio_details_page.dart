@@ -43,12 +43,7 @@ class _RadioDetailsPageState extends State<RadioDetailsPage> {
     if (websiteUrl != null) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.radio.name)),
-        body: Column(
-          children: [
-            _livePlayer(widget.radio),
-            Expanded(child: _WebsiteView(url: websiteUrl)),
-          ],
-        ),
+        body: _WebsiteView(url: websiteUrl),
       );
     }
     return Scaffold(

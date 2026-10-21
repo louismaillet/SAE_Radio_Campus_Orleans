@@ -24,5 +24,5 @@ flutter run -d emulator-5554
 | `lib/app.dart` | `MaterialApp` et page d'accueil |
 | `lib/models/campus_radio.dart` | Modèles de données et classe `RadioRepository` |
 | `lib/pages/radio_list_page.dart` | Liste des radios avec `FutureBuilder` |
-| `lib/pages/radio_details_page.dart` | Direct + WebView du site (ou podcasts/news) avec `FutureBuilder` |
+| `lib/pages/radio_details_page.dart` | WebView du site (ou direct + podcasts/news) avec `FutureBuilder` |
 | `lib/widgets/live_player_tile.dart` | Contrôle de la lecture audio en direct |

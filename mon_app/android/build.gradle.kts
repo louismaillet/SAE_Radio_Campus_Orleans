@@ -15,6 +15,16 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+// audioplayers_android 5.x ne déclare pas compileSdk : on le fixe pour les plugins qui l'oublient
+subprojects {
+    pluginManager.withPlugin("com.android.library") {
+        val android = extensions.getByName("android")
+        val getter = android.javaClass.getMethod("getCompileSdk")
+        if (getter.invoke(android) == null) {
+            android.javaClass.getMethod("setCompileSdk", Integer::class.java).invoke(android, 36)
+        }
+    }
+}
 subprojects {
     project.evaluationDependsOn(":app")
 }

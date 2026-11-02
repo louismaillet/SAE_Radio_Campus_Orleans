@@ -6,7 +6,6 @@ import FlutterMacOS
 import Foundation
 
 import audioplayers_darwin
-import file_picker_darwin
 import shared_preferences_foundation
 import webview_all_wkwebview
 

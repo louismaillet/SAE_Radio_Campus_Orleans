@@ -45,6 +45,7 @@ class _LivePlayerTileState extends State<LivePlayerTile> {
 
   @override
   Widget build(BuildContext context) => ListTile(
+        iconColor: Theme.of(context).colorScheme.secondary, // couleur choisie par le gérant
         leading: _loading
             ? const CircularProgressIndicator()
             : Icon(_playing ? Icons.stop : Icons.play_arrow),

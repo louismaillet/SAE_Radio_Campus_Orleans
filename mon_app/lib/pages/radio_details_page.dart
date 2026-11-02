@@ -4,6 +4,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:webview_all/webview_all.dart';
 
 import '../models/campus_radio.dart';
+import '../models/radio_settings.dart';
 import '../widgets/live_player_tile.dart';
 
 // Lecteur du direct, ou rien si la radio n'a pas de flux.
@@ -15,8 +16,41 @@ Widget _livePlayer(CampusRadio radio) {
   return LivePlayerTile(streamUrl: streamUrl);
 }
 
-// Radio avec site officiel : on affiche le site.
-// Sinon on charge sa description depuis l'API, avec ses podcasts et les actualités.
+// Thème de la page d'une radio : la couleur secondaire choisie par le gérant.
+ThemeData _themeRadio(BuildContext context, Color? couleur) {
+  final theme = Theme.of(context);
+  if (couleur == null) {
+    return theme;
+  }
+  // Texte blanc sur une couleur foncée, noir sur une couleur claire.
+  Color texte = Colors.black;
+  if (ThemeData.estimateBrightnessForColor(couleur) == Brightness.dark) {
+    texte = Colors.white;
+  }
+  return theme.copyWith(
+    colorScheme: theme.colorScheme.copyWith(secondary: couleur, onSecondary: texte),
+  );
+}
+
+// Bandeau sous la barre du haut : le logo sur la couleur secondaire.
+Widget _bandeau(ThemeData theme, CampusRadio radio, RadioSettings reglages) {
+  Widget logo = const Icon(Icons.radio, size: 56);
+  final logoUrl = radio.logoUrl;
+  if (reglages.logo != null) {
+    logo = Image.memory(reglages.logo!, height: 56);
+  } else if (logoUrl != null) {
+    logo = Image.network(logoUrl, height: 56);
+  }
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(8),
+    color: theme.colorScheme.secondary,
+    child: Center(child: logo),
+  );
+}
+
+// Selon le choix du gérant : on affiche le site web de la radio,
+// ou sa description depuis l'API, avec ses podcasts et les actualités.
 class RadioDetailsPage extends StatefulWidget {
   const RadioDetailsPage({required this.radio, super.key});
   final CampusRadio radio;
@@ -26,35 +60,58 @@ class RadioDetailsPage extends StatefulWidget {
 }
 
 class _RadioDetailsPageState extends State<RadioDetailsPage> {
-  Future<RadioDetails>? _detailsFuture;
+  late Future<RadioSettings> _reglagesFuture;
+  // Détail de l'API, chargé seulement pour la version appli.
+  RadioDetails? _details;
 
   @override
   void initState() {
     super.initState();
-    // Pas besoin de l'API si la radio a un site.
-    if (widget.radio.websiteUrl == null) {
-      _detailsFuture = RadioRepository.getDetails(widget.radio.id);
+    _reglagesFuture = _charger();
+  }
+
+  // Le site s'affiche si le gérant l'a choisi et a donné son adresse.
+  bool _ouvreLeSite(RadioSettings reglages) {
+    return reglages.afficherSite && reglages.siteUrl != null;
+  }
+
+  // On lit les réglages du gérant, puis le détail de l'API si besoin.
+  Future<RadioSettings> _charger() async {
+    final reglages = await RadioSettingsRepository.load(widget.radio);
+    if (!_ouvreLeSite(reglages)) {
+      _details = await RadioRepository.getDetails(widget.radio.id);
     }
+    return reglages;
   }
 
   @override
   Widget build(BuildContext context) {
-    final websiteUrl = widget.radio.websiteUrl;
-    if (websiteUrl != null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(widget.radio.name)),
-        body: _WebsiteView(url: websiteUrl),
-      );
-    }
     return Scaffold(
       appBar: AppBar(title: Text(widget.radio.name)),
-      body: FutureBuilder<RadioDetails>(
-        future: _detailsFuture,
+      body: FutureBuilder<RadioSettings>(
+        future: _reglagesFuture,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          return _ContentView(radio: widget.radio, details: snapshot.data!);
+          final reglages = snapshot.data!;
+          Widget contenu;
+          if (_ouvreLeSite(reglages)) {
+            contenu = _WebsiteView(url: reglages.siteUrl!);
+          } else {
+            contenu = _ContentView(radio: widget.radio, details: _details!);
+          }
+          // Le widget Theme applique la couleur du gérant à tout ce qu'il contient.
+          final theme = _themeRadio(context, reglages.couleur);
+          return Theme(
+            data: theme,
+            child: Column(
+              children: [
+                _bandeau(theme, widget.radio, reglages),
+                Expanded(child: contenu),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -188,7 +245,12 @@ class _ContentViewState extends State<_ContentView> {
     final widgets = <Widget>[
       Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+        ),
       ),
     ];
     if (items.isEmpty) {
@@ -224,6 +286,7 @@ class _ContentViewState extends State<_ContentView> {
     if (audioUrl != null) {
       final enLecture = _playingUrl == audioUrl;
       bouton = IconButton(
+        color: Theme.of(context).colorScheme.secondary,
         icon: Icon(enLecture ? Icons.stop : Icons.play_arrow),
         onPressed: () => _togglePodcast(audioUrl),
       );

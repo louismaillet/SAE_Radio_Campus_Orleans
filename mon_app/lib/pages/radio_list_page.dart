@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/campus_radio.dart';
+import '../models/radio_settings.dart';
+import 'admin_page.dart';
 import 'radio_details_page.dart';
 
 // Clé sous laquelle on mémorise la radio choisie (son slug) sur l'appareil.
@@ -16,6 +20,8 @@ class RadioListPage extends StatefulWidget {
 
 class _RadioListPageState extends State<RadioListPage> {
   late Future<List<CampusRadio>> _radiosFuture;
+  // Logos ajoutés par les gérants (slug -> image).
+  Map<String, Uint8List> _logos = {};
 
   @override
   void initState() {
@@ -95,6 +101,10 @@ class _RadioListPageState extends State<RadioListPage> {
   }
 
   Widget _logo(CampusRadio radio) {
+    final logoGerant = _logos[radio.id];
+    if (logoGerant != null) {
+      return Image.memory(logoGerant, width: 40, height: 40);
+    }
     final logoUrl = radio.logoUrl;
     if (logoUrl == null) {
       return const Icon(Icons.radio);
@@ -110,7 +120,16 @@ class _RadioListPageState extends State<RadioListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Radios Campus')),
+      appBar: AppBar(
+        title: const Text('Radios Campus'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Espace gérant',
+            onPressed: _ouvrirAdmin,
+          ),
+        ],
+      ),
       body: FutureBuilder<List<CampusRadio>>(
         future: _radiosFuture,
         builder: (context, snapshot) {

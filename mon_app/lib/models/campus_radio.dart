@@ -43,6 +43,9 @@ class CampusRadio {
     required this.logoUrl,
     required this.streamUrl,
     required this.websiteUrl,
+    this.city,
+    this.excerpt,
+    this.categoryColor,
   });
 
   final String id; // le "slug" de l'API
@@ -50,6 +53,9 @@ class CampusRadio {
   final String? logoUrl;
   final String? streamUrl;
   final String? websiteUrl; // null = pas de site officiel
+  final String? city;
+  final String? excerpt; // courte présentation
+  final String? categoryColor; // couleur de la catégorie, ex. "#2154ff"
 
   factory CampusRadio.fromJson(Map<String, dynamic> json) {
     final slug = json['slug'] as String;
@@ -59,8 +65,20 @@ class CampusRadio {
       logoUrl: _imageUrl(json['imageUrl']),
       streamUrl: json['mediaUrl'] as String?,
       websiteUrl: _sitesOfficiels[slug],
+      city: json['city'] as String?,
+      excerpt: json['contentExcerpt'] as String?,
+      categoryColor: (json['category'] as Map?)?['color'] as String?,
     );
   }
+}
+
+// Émission d'une radio (dans /radios/{slug}).
+class RadioShow {
+  const RadioShow({required this.slug, required this.title, required this.imageUrl});
+
+  final String slug;
+  final String title;
+  final String? imageUrl;
 }
 
 // Détail d'une radio sans site (/radios/{slug}) : description et ses émissions.
@@ -68,19 +86,38 @@ class RadioDetails {
   const RadioDetails({
     required this.description,
     required this.showSlugs,
+    this.shows = const [],
+    this.catchPhrase,
+    this.backgroundColor,
+    this.address,
+    this.email,
   });
 
   final String? description; // en HTML
   final List<String> showSlugs;
+  final List<RadioShow> shows;
+  final String? catchPhrase; // slogan, ex. "RADIO CAMPUS ORLÉANS - 88.3 FM"
+  final String? backgroundColor; // couleur choisie par la radio, ex. "#ff0000"
+  final String? address;
+  final String? email;
 
   factory RadioDetails.fromJson(Map<String, dynamic> json) {
     final showSlugs = <String>[];
+    final shows = <RadioShow>[];
     for (final show in json['radioshows']['member'] as List<dynamic>) {
       showSlugs.add(show['slug'] as String);
+      shows.add(
+        RadioShow(slug: show['slug'] as String, title: show['title'] as String, imageUrl: _imageUrl(show['imageUrl'])),
+      );
     }
     return RadioDetails(
       description: json['content'] as String?,
       showSlugs: showSlugs,
+      shows: shows,
+      catchPhrase: json['catchPhrase'] as String?,
+      backgroundColor: json['backgroundColor'] as String?,
+      address: json['address'] as String?,
+      email: json['email'] as String?,
     );
   }
 }
@@ -95,6 +132,8 @@ class RadioContent {
     required this.date,
     required this.audioUrl,
     required this.imageUrl,
+    this.showSlug,
+    this.showTitle,
   });
 
   final RadioContentType type;
@@ -103,8 +142,11 @@ class RadioContent {
   final String date;
   final String? audioUrl; // seulement pour les podcasts
   final String? imageUrl;
+  final String? showSlug; // émission du podcast
+  final String? showTitle;
 
   factory RadioContent.fromPodcastJson(Map<String, dynamic> json) {
+    final emission = json['radioshow'];
     return RadioContent(
       type: RadioContentType.podcast,
       title: json['title'] as String,
@@ -112,6 +154,8 @@ class RadioContent {
       date: _formatDate(DateTime.parse(json['createdAt'] as String)),
       audioUrl: json['mediaUrl'] as String?,
       imageUrl: _imageUrl(json['imageUrl']),
+      showSlug: emission is Map ? emission['slug'] as String? : null,
+      showTitle: emission is Map ? emission['title'] as String? : null,
     );
   }
 
@@ -175,27 +219,62 @@ class RadioRepository {
   }
 
   // Podcasts des émissions de la radio, puis les dernières actualités.
+  // Tous les podcasts publiés, du plus récent au plus ancien.
+  // L'appel est gardé en mémoire : les pages radio s'en servent.
+  static Future<List<Map<String, dynamic>>>? _podcastsCache;
+
+  static Future<List<Map<String, dynamic>>> _podcastsPublies() {
+    final cache = _podcastsCache;
+    if (cache != null) {
+      return cache;
+    }
+    final future = _chargerPodcasts();
+    _podcastsCache = future;
+    // En cas d'erreur, on réessaiera au prochain appel.
+    future.catchError((Object _) {
+      _podcastsCache = null;
+      return <Map<String, dynamic>>[];
+    });
+    return future;
+  }
+
+  static Future<List<Map<String, dynamic>>> _chargerPodcasts() async {
+    final data = await _get('/podcasts', {'itemsPerPage': '300'});
+    final podcasts = <Map<String, dynamic>>[];
+    for (final item in data['member'] as List<dynamic>) {
+      final podcast = item as Map<String, dynamic>;
+      if (podcast['published'] == true) {
+        podcasts.add(podcast);
+      }
+    }
+    // Les dates ISO 8601 se trient comme du texte.
+    podcasts.sort((a, b) => (b['createdAt'] as String).compareTo(a['createdAt'] as String));
+    return podcasts;
+  }
+
   static Future<List<RadioContent>> getContent(List<String> showSlugs) async {
     final contenus = <RadioContent>[];
 
     // Le filtre par radio de l'API ne marche pas : on prend tous les podcasts
-    // (235 au total) et on garde ceux publiés qui viennent des émissions de la radio.
-    final podcasts = await _get('/podcasts', {'itemsPerPage': '300'});
-    for (final item in podcasts['member'] as List<dynamic>) {
-      final podcast = item as Map<String, dynamic>;
+    // (235 au total) et on garde ceux qui viennent des émissions de la radio.
+    for (final podcast in await _podcastsPublies()) {
       final emission = podcast['radioshow'];
-      if (podcast['published'] == true &&
-          emission is Map &&
-          showSlugs.contains(emission['slug'])) {
+      if (emission is Map && showSlugs.contains(emission['slug'])) {
         contenus.add(RadioContent.fromPodcastJson(podcast));
       }
     }
 
-    // Les articles ne sont pas liés à une radio : ce sont les actualités du réseau.
-    final articles = await _get('/articles', {'itemsPerPage': '5', 'order[publishedAt]': 'desc'});
-    for (final item in articles['member'] as List<dynamic>) {
-      contenus.add(RadioContent.fromNewsJson(item as Map<String, dynamic>));
-    }
+    contenus.addAll(await getNews());
     return contenus;
+  }
+
+  // Les articles ne sont pas liés à une radio : ce sont les actualités du réseau.
+  static Future<List<RadioContent>> getNews() async {
+    final articles = await _get('/articles', {'itemsPerPage': '5', 'order[publishedAt]': 'desc'});
+    final news = <RadioContent>[];
+    for (final item in articles['member'] as List<dynamic>) {
+      news.add(RadioContent.fromNewsJson(item as Map<String, dynamic>));
+    }
+    return news;
   }
 }

@@ -27,7 +27,23 @@ class _RadioListPageState extends State<RadioListPage> {
   void initState() {
     super.initState();
     _radiosFuture = RadioRepository.getRadios();
+    _chargerLogos();
     _ouvrirRadioMemorisee();
+  }
+
+  Future<void> _chargerLogos() async {
+    final logos = await RadioSettingsRepository.loadLogos();
+    if (mounted) {
+      setState(() => _logos = logos);
+    }
+  }
+
+  // Ouvre l'espace gérant, puis recharge les logos au retour (il a pu en changer).
+  Future<void> _ouvrirAdmin() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (context) => const AdminPage()),
+    );
+    _chargerLogos();
   }
 
   // Si une radio a déjà été choisie lors d'une ouverture précédente,

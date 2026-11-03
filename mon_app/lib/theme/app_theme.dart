@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // Couleurs de base de l'appli (identité du réseau Radio Campus).
@@ -30,22 +31,18 @@ class AppTheme {
 
   // "fidelity" garde la couleur d'origine (celle du logo) au lieu de la ternir.
   static ColorScheme schemeFromSeed(Color seed, Brightness brightness) => ColorScheme.fromSeed(
-        seedColor: seed,
-        brightness: brightness,
-        dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-      );
+    seedColor: seed,
+    brightness: brightness,
+    dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+  );
 
-  static ThemeData fromSeed(Color seed, Brightness brightness) =>
-      fromScheme(schemeFromSeed(seed, brightness));
+  static ThemeData fromSeed(Color seed, Brightness brightness) => fromScheme(schemeFromSeed(seed, brightness));
 
   // Tout le thème est construit à partir d'un ColorScheme : c'est ce qui permet
   // à chaque page radio d'avoir ses propres couleurs avec les mêmes composants.
   static ThemeData fromScheme(ColorScheme scheme) {
     final base = ThemeData(colorScheme: scheme, useMaterial3: true);
-    final texte = _textTheme(base.textTheme).apply(
-      bodyColor: scheme.onSurface,
-      displayColor: scheme.onSurface,
-    );
+    final texte = _textTheme(base.textTheme).apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
     final champ = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
@@ -61,6 +58,11 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: texte.titleLarge,
+        // Icônes de la barre de statut lisibles sur le fond (barres transparentes).
+        systemOverlayStyle:
+            (scheme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(
+              statusBarColor: Colors.transparent,
+            ),
       ),
       cardTheme: CardThemeData(
         color: scheme.surfaceContainer,
@@ -70,22 +72,20 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           shape: const StadiumBorder(),
           textStyle: texte.labelLarge!.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           shape: const StadiumBorder(),
           side: BorderSide(color: scheme.outline.withValues(alpha: 0.5)),
           textStyle: texte.labelLarge!.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(shape: const StadiumBorder()),
-      ),
+      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(shape: const StadiumBorder())),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
@@ -108,7 +108,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
       ),
-      // Le lecteur du bas est hors du Navigator : pas de bulle de valeur sur le curseur.
+      // Pas de bulle de valeur au-dessus du curseur (gênante sous le doigt).
       sliderTheme: const SliderThemeData(
         showValueIndicator: ShowValueIndicator.never,
         trackHeight: 3,
@@ -118,8 +118,7 @@ class AppTheme {
       dividerTheme: DividerThemeData(color: scheme.outlineVariant.withValues(alpha: 0.35)),
       pageTransitionsTheme: PageTransitionsTheme(
         builders: {
-          for (final plateforme in TargetPlatform.values)
-            plateforme: const FadeForwardsPageTransitionsBuilder(),
+          for (final plateforme in TargetPlatform.values) plateforme: const FadeForwardsPageTransitionsBuilder(),
         },
       ),
     );

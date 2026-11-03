@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../models/campus_radio.dart';
 import '../player/player_controller.dart';
 import '../theme/app_theme.dart';
-import 'hover.dart';
 import 'images.dart';
 import 'live.dart';
+import 'pressable.dart';
 
 // Titre de section, avec un texte d'accompagnement et une action à droite.
 class SectionHeader extends StatelessWidget {
@@ -30,7 +30,7 @@ class SectionHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: textes.headlineSmall),
+                Text(title, style: textes.titleLarge),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(subtitle!, style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant)),
@@ -57,9 +57,10 @@ class PlayFab extends StatelessWidget {
     final player = PlayerScope.of(context);
     final scheme = Theme.of(context).colorScheme;
     final courant = player.isCurrent(track.url);
+    final enLecture = courant && player.isPlaying;
 
     Widget icone = Icon(
-      courant && player.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+      enLecture ? (track.isLive ? Icons.stop_rounded : Icons.pause_rounded) : Icons.play_arrow_rounded,
       size: size * 0.55,
       color: scheme.onPrimary,
     );
@@ -70,24 +71,31 @@ class PlayFab extends StatelessWidget {
       );
     }
 
-    return Material(
-      color: scheme.primary,
-      shape: const CircleBorder(),
-      elevation: 6,
-      shadowColor: scheme.primary.withValues(alpha: 0.5),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => PlayerScope.read(context).play(track),
-        child: SizedBox.square(dimension: size, child: Center(child: icone)),
+    return Semantics(
+      button: true,
+      label: enLecture ? 'Pause' : 'Écouter',
+      child: Material(
+        color: scheme.primary,
+        shape: const CircleBorder(),
+        elevation: 4,
+        shadowColor: scheme.primary.withValues(alpha: 0.5),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => PlayerScope.read(context).play(track),
+          child: SizedBox.square(
+            dimension: size,
+            child: Center(child: icone),
+          ),
+        ),
       ),
     );
   }
 }
 
-// Carte d'un podcast : pochette, émission, date et lecture rapide.
-// Faite pour une grille à hauteur fixe (mainAxisExtent ~ 300).
-class PodcastCard extends StatelessWidget {
-  const PodcastCard({required this.podcast, this.radioName, this.accent, super.key});
+// Ligne d'un podcast : vignette, émission, titre, date et bouton lecture.
+// Toute la ligne est appuyable pour lancer l'écoute.
+class PodcastTile extends StatelessWidget {
+  const PodcastTile({required this.podcast, this.radioName, this.accent, super.key});
 
   final RadioContent podcast;
   final String? radioName;
@@ -100,109 +108,77 @@ class PodcastCard extends StatelessWidget {
     final audio = podcast.audioUrl;
     final player = PlayerScope.of(context);
     final enLecture = audio != null && player.isCurrent(audio) && player.isPlaying;
+    final emission = podcast.showTitle ?? radioName ?? 'Podcast';
 
     PlayerTrack? track;
     if (audio != null) {
       track = PlayerTrack(
         url: audio,
         title: podcast.title,
-        subtitle: podcast.showTitle ?? radioName ?? 'Podcast',
+        subtitle: emission,
         isLive: false,
         artworkUrl: podcast.imageUrl,
         accent: accent,
       );
     }
 
-    return HoverBuilder(
+    return Pressable(
       onTap: track == null ? null : () => PlayerScope.read(context).play(track!),
-      builder: (context, hovered) => AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, hovered ? -6 : 0, 0),
+      builder: (context, pressed) => AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainer.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: enLecture ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.25),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.primary.withValues(alpha: hovered ? 0.25 : 0),
-              blurRadius: 32,
-              offset: const Offset(0, 14),
-              spreadRadius: -12,
-            ),
-          ],
+          color: pressed ? scheme.surfaceContainerHigh : scheme.surfaceContainer.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: enLecture ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.25)),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Row(
           children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  AnimatedScale(
-                    scale: hovered ? 1.06 : 1,
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                    child: CoverImage(url: podcast.imageUrl),
-                  ),
-                  // Assombrit le bas de l'image pour faire ressortir le bouton.
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.center,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black54],
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: SizedBox.square(
+                dimension: 64,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CoverImage(url: podcast.imageUrl),
+                    if (enLecture)
+                      const ColoredBox(
+                        color: Colors.black45,
+                        child: Center(child: EqualizerBars(color: Colors.white, size: 20)),
                       ),
-                    ),
-                  ),
-                  if (enLecture)
-                    const Positioned(left: 14, bottom: 14, child: EqualizerBars(color: Colors.white)),
-                  if (track != null)
-                    Positioned(
-                      right: 12,
-                      bottom: 12,
-                      child: AnimatedScale(
-                        scale: hovered || enLecture ? 1 : 0.85,
-                        duration: const Duration(milliseconds: 200),
-                        child: PlayFab(track: track),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (podcast.showTitle ?? radioName ?? 'Podcast').toUpperCase(),
+                    emission.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textes.labelSmall!.copyWith(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    height: 44, // 2 lignes, pour aligner toutes les cartes
-                    child: Text(
-                      podcast.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w600, height: 1.35),
-                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    podcast.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w600, height: 1.3),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 2),
                   Text(podcast.date, style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant)),
                 ],
               ),
             ),
+            if (track != null) ...[const SizedBox(width: 8), PlayFab(track: track, size: 44)],
           ],
         ),
       ),
@@ -210,7 +186,8 @@ class PodcastCard extends StatelessWidget {
   }
 }
 
-// Carte d'une radio du réseau, avec écoute rapide du direct au survol.
+// Carte d'une radio du réseau, avec un bouton pour écouter le direct sans l'ouvrir.
+// Faite pour une grille à hauteur fixe (mainAxisExtent ~ 168).
 class RadioCard extends StatelessWidget {
   const RadioCard({required this.radio, required this.onTap, this.logo, super.key});
 
@@ -226,67 +203,29 @@ class RadioCard extends StatelessWidget {
     final player = PlayerScope.of(context);
     final enLecture = flux != null && player.isCurrent(flux) && player.isPlaying;
 
-    return HoverBuilder(
+    return Pressable(
       onTap: onTap,
-      builder: (context, hovered) => AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, hovered ? -6 : 0, 0),
-        padding: const EdgeInsets.all(AppSpacing.md),
+      builder: (context, pressed) => AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          color: hovered ? scheme.surfaceContainerHigh : scheme.surfaceContainer.withValues(alpha: 0.7),
-          border: Border.all(
-            color: enLecture ? scheme.primary : scheme.outlineVariant.withValues(alpha: hovered ? 0.5 : 0.25),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.primary.withValues(alpha: hovered ? 0.22 : 0),
-              blurRadius: 30,
-              offset: const Offset(0, 12),
-              spreadRadius: -12,
-            ),
-          ],
+          color: pressed ? scheme.surfaceContainerHigh : scheme.surfaceContainer.withValues(alpha: 0.8),
+          border: Border.all(color: enLecture ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.25)),
         ),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Hero(tag: 'logo-${radio.id}', child: RadioLogo(url: radio.logoUrl, bytes: logo, size: 64)),
+                Hero(
+                  tag: 'logo-${radio.id}',
+                  child: RadioLogo(url: radio.logoUrl, bytes: logo, size: 56),
+                ),
                 const Spacer(),
-                Text(
-                  radio.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w600, height: 1.3),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (enLecture) ...[const EqualizerBars(size: 12), const SizedBox(width: 6)],
-                    Expanded(
-                      child: Text(
-                        enLecture ? 'En écoute' : (radio.city ?? 'Réseau Radio Campus'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textes.bodySmall!.copyWith(
-                          color: enLecture ? scheme.primary : scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            if (flux != null)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: AnimatedOpacity(
-                  opacity: hovered || enLecture ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: PlayFab(
+                if (flux != null)
+                  PlayFab(
                     size: 40,
                     track: PlayerTrack(
                       url: flux,
@@ -297,8 +236,29 @@ class RadioCard extends StatelessWidget {
                       artworkBytes: logo,
                     ),
                   ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              radio.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w600, height: 1.25),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                if (enLecture) ...[const EqualizerBars(size: 12), const SizedBox(width: 6)],
+                Expanded(
+                  child: Text(
+                    enLecture ? 'En écoute' : (radio.city ?? 'Réseau Radio Campus'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textes.bodySmall!.copyWith(color: enLecture ? scheme.primary : scheme.onSurfaceVariant),
+                  ),
                 ),
-              ),
+              ],
+            ),
           ],
         ),
       ),
@@ -317,36 +277,35 @@ class NewsCard extends StatelessWidget {
     final textes = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: scheme.surfaceContainer.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: SizedBox.square(
-              dimension: 88,
+              dimension: 80,
               child: CoverImage(url: news.imageUrl, icon: Icons.article_rounded),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(news.date, style: textes.labelSmall!.copyWith(color: scheme.primary)),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   news.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   news.description,
                   maxLines: 2,
@@ -374,6 +333,7 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -383,10 +343,18 @@ class EmptyState extends StatelessWidget {
         children: [
           Icon(icon, size: 32, color: scheme.onSurfaceVariant),
           const SizedBox(height: AppSpacing.sm),
-          Text(message, textAlign: TextAlign.center, style: TextStyle(color: scheme.onSurfaceVariant)),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: scheme.onSurfaceVariant),
+          ),
           if (onRetry != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            TextButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded), label: const Text('Réessayer')),
+            TextButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Réessayer'),
+            ),
           ],
         ],
       ),

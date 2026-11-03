@@ -7,7 +7,7 @@ import '../../models/campus_radio.dart';
 import '../../models/radio_settings.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/radio_palette.dart';
-import '../../widgets/glass.dart';
+import '../../widgets/cards.dart';
 import '../../widgets/images.dart';
 import '../login_page.dart';
 import '../radio_details_page.dart';
@@ -26,6 +26,7 @@ class _AdminPageState extends State<AdminPage> {
   late Future<List<CampusRadio>> _radiosFuture;
   // Radio gérée (null tant qu'il n'est pas connecté à une radio).
   CampusRadio? _radio;
+  String _recherche = '';
 
   @override
   void initState() {
@@ -35,9 +36,10 @@ class _AdminPageState extends State<AdminPage> {
 
   // Radio choisie : connexion d'abord, puis on ouvre le tableau de bord.
   Future<void> _choisirRadio(CampusRadio radio) async {
-    final connecte = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(builder: (context) => LoginPage(radio: radio)),
-    );
+    FocusScope.of(context).unfocus();
+    final connecte = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute<bool>(builder: (context) => LoginPage(radio: radio)));
     if (connecte == true && mounted) {
       setState(() => _radio = radio);
     }
@@ -51,78 +53,91 @@ class _AdminPageState extends State<AdminPage> {
     }
     final textes = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final cote = Responsive.sidePadding(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Espace gérant')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Glass(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(Icons.admin_panel_settings_outlined, size: 48, color: scheme.primary),
-                  const SizedBox(height: AppSpacing.md),
-                  Text('Gérer ma radio', textAlign: TextAlign.center, style: textes.headlineSmall),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Choisis la radio que tu gères pour personnaliser sa page.',
-                    textAlign: TextAlign.center,
-                    style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(cote, AppSpacing.sm, cote, AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Quelle radio gères-tu ?', style: textes.titleLarge),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Choisis-la pour te connecter et personnaliser sa page.',
+                  style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  onChanged: (texte) => setState(() => _recherche = texte.trim().toLowerCase()),
+                  textInputAction: TextInputAction.search,
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher ma radio…',
+                    prefixIcon: Icon(Icons.search_rounded),
+                    isDense: true,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  FutureBuilder<List<CampusRadio>>(
-                    future: _radiosFuture,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      return LayoutBuilder(
-                        builder: (context, contraintes) => DropdownMenu<CampusRadio>(
-                          width: contraintes.maxWidth,
-                          hintText: 'Rechercher ma radio…',
-                          enableFilter: true,
-                          requestFocusOnTap: true,
-                          leadingIcon: const Icon(Icons.search_rounded),
-                          menuHeight: 320,
-                          onSelected: (radio) {
-                            if (radio != null) {
-                              _choisirRadio(radio);
-                            }
-                          },
-                          dropdownMenuEntries: [
-                            for (final radio in snapshot.data!)
-                              DropdownMenuEntry(value: radio, label: radio.name),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ),
+          Expanded(
+            child: FutureBuilder<List<CampusRadio>>(
+              future: _radiosFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: cote),
+                    child: EmptyState(
+                      message: 'Impossible de charger les radios.',
+                      icon: Icons.wifi_off_rounded,
+                      onRetry: () => setState(() => _radiosFuture = RadioRepository.getRadios()),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final radios = snapshot.data!.where((r) => r.name.toLowerCase().contains(_recherche)).toList();
+                return ListView.builder(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.fromLTRB(cote - 8, 0, cote - 8, MediaQuery.paddingOf(context).bottom + 16),
+                  itemCount: radios.length,
+                  itemBuilder: (context, i) => ListTile(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    leading: RadioLogo(url: radios[i].logoUrl, size: 44, radius: AppRadius.sm),
+                    title: Text(radios[i].name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: radios[i].city == null ? null : Text(radios[i].city!),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _choisirRadio(radios[i]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 enum AdminSection {
-  dashboard('Tableau de bord', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
-  apparence('Apparence', Icons.palette_outlined, Icons.palette_rounded),
-  flux('Flux audio', Icons.sensors_outlined, Icons.sensors_rounded);
+  dashboard('Tableau de bord', 'Accueil', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
+  apparence('Apparence', 'Apparence', Icons.palette_outlined, Icons.palette_rounded),
+  flux('Flux audio', 'Flux', Icons.sensors_outlined, Icons.sensors_rounded);
 
-  const AdminSection(this.label, this.icon, this.selectedIcon);
+  const AdminSection(this.label, this.shortLabel, this.icon, this.selectedIcon);
 
   final String label;
+  final String shortLabel; // dans la barre du bas
   final IconData icon;
   final IconData selectedIcon;
 }
 
-// Tableau de bord du gérant connecté : barre latérale rétractable + contenu.
+// Tableau de bord du gérant connecté : barre de navigation en bas + contenu.
 // Les réglages modifiés ne sont enregistrés qu'avec le bouton "Enregistrer".
 class AdminShell extends StatefulWidget {
   const AdminShell({required this.radio, required this.onLogout, super.key});
@@ -136,7 +151,6 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   AdminSection _section = AdminSection.dashboard;
-  bool _replie = false; // barre latérale réduite aux icônes
 
   // Réglages tels qu'enregistrés, et ceux en cours de modification.
   RadioSettings? _enregistres;
@@ -152,7 +166,7 @@ class _AdminShellState extends State<AdminShell> {
     super.initState();
     _detailsFuture = RadioRepository.getDetails(widget.radio.id);
     _contenuFuture = _detailsFuture.then((d) => RadioRepository.getContent(d.showSlugs));
-    // Pour afficher "Modifications non enregistrées" pendant la saisie de l'adresse.
+    // Pour activer "Enregistrer" pendant la saisie de l'adresse.
     _siteController.addListener(() => setState(() {}));
     _chargerReglages();
   }
@@ -211,11 +225,10 @@ class _AdminShellState extends State<AdminShell> {
     setState(() {
       _apercuFuture = _detailsFuture
           .then((d) => d.backgroundColor, onError: (Object _) => null)
-          .then((couleurApi) => RadioPaletteResolver.resolve(
-                widget.radio,
-                settings: _reglagesEnCours(),
-                couleurApi: couleurApi,
-              ));
+          .then(
+            (couleurApi) =>
+                RadioPaletteResolver.resolve(widget.radio, settings: _reglagesEnCours(), couleurApi: couleurApi),
+          );
     });
   }
 
@@ -224,6 +237,7 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   Future<void> _enregistrer() async {
+    FocusScope.of(context).unfocus();
     final reglages = _reglagesEnCours();
     if (reglages.afficherSite && reglages.siteUrl == null) {
       setState(() => _section = AdminSection.apparence);
@@ -238,9 +252,32 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   void _voirMaPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: widget.radio)),
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: widget.radio)));
+  }
+
+  // Quitter avec des modifications non enregistrées : on demande d'abord.
+  Future<bool> _peutQuitter() async {
+    if (!_modifie) {
+      return true;
+    }
+    final quitter = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Modifications non enregistrées'),
+        content: const Text('Si tu quittes maintenant, tes modifications seront perdues.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Quitter')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Rester')),
+        ],
+      ),
     );
+    return quitter == true;
+  }
+
+  Future<void> _deconnexion() async {
+    if (await _peutQuitter()) {
+      widget.onLogout();
+    }
   }
 
   @override
@@ -248,29 +285,83 @@ class _AdminShellState extends State<AdminShell> {
     if (_enregistres == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final compact = Responsive.isCompact(context);
-    final contenu = _contenu();
+    final textes = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
-    if (compact) {
-      return Scaffold(
-        appBar: AppBar(title: Text(_section.label), actions: [_boutonEnregistrer(), const SizedBox(width: 8)]),
-        drawer: Drawer(child: _sidebar(replie: false, dansDrawer: true)),
-        body: contenu,
-      );
-    }
-    return Scaffold(
-      body: Row(
-        children: [
-          _sidebar(replie: _replie),
-          Expanded(
-            child: Column(
-              children: [
-                _barreHaut(),
-                Expanded(child: contenu),
+    return PopScope(
+      canPop: !_modifie,
+      onPopInvokedWithResult: (aQuitte, _) async {
+        if (!aQuitte && await _peutQuitter() && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          titleSpacing: 0,
+          title: Row(
+            children: [
+              RadioLogo(url: widget.radio.logoUrl, bytes: _brouillon.logo, size: 36, radius: AppRadius.sm),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_section.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: textes.titleMedium),
+                    Text(
+                      widget.radio.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            PopupMenuButton<VoidCallback>(
+              tooltip: 'Plus',
+              onSelected: (action) => action(),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _voirMaPage,
+                  child: const ListTile(leading: Icon(Icons.visibility_outlined), title: Text('Voir ma page')),
+                ),
+                PopupMenuItem(
+                  value: _deconnexion,
+                  child: const ListTile(leading: Icon(Icons.logout_rounded), title: Text('Déconnexion')),
+                ),
               ],
             ),
+          ],
+        ),
+        body: _contenu(),
+        // Bouton "Enregistrer" flottant, visible seulement s'il y a quelque chose à enregistrer.
+        floatingActionButton: AnimatedScale(
+          scale: _modifie ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: FloatingActionButton.extended(
+            onPressed: _modifie ? _enregistrer : null,
+            icon: const Icon(Icons.save_rounded),
+            label: const Text('Enregistrer'),
           ),
-        ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _section.index,
+          onDestinationSelected: (i) {
+            FocusScope.of(context).unfocus();
+            setState(() => _section = AdminSection.values[i]);
+          },
+          destinations: [
+            for (final section in AdminSection.values)
+              NavigationDestination(
+                icon: Icon(section.icon),
+                selectedIcon: Icon(section.selectedIcon),
+                label: section.shortLabel,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -278,26 +369,22 @@ class _AdminShellState extends State<AdminShell> {
   Widget _contenu() {
     final section = switch (_section) {
       AdminSection.dashboard => DashboardSection(
-          radio: widget.radio,
-          reglages: _reglagesEnCours(),
-          detailsFuture: _detailsFuture,
-          contenuFuture: _contenuFuture,
-          apercuFuture: _apercuFuture,
-          onVoirMaPage: _voirMaPage,
-        ),
+        radio: widget.radio,
+        reglages: _reglagesEnCours(),
+        detailsFuture: _detailsFuture,
+        contenuFuture: _contenuFuture,
+        apercuFuture: _apercuFuture,
+        onVoirMaPage: _voirMaPage,
+      ),
       AdminSection.apparence => AppearanceSection(
-          radio: widget.radio,
-          brouillon: _brouillon,
-          siteController: _siteController,
-          apercuFuture: _apercuFuture,
-          onChanged: _modifier,
-          onMessage: _message,
-        ),
-      AdminSection.flux => StreamSection(
-          radio: widget.radio,
-          brouillon: _brouillon,
-          onChanged: _modifier,
-        ),
+        radio: widget.radio,
+        brouillon: _brouillon,
+        siteController: _siteController,
+        apercuFuture: _apercuFuture,
+        onChanged: _modifier,
+        onMessage: _message,
+      ),
+      AdminSection.flux => StreamSection(radio: widget.radio, brouillon: _brouillon, onChanged: _modifier),
     };
     // Changement de section en fondu.
     return AnimatedSwitcher(
@@ -305,180 +392,6 @@ class _AdminShellState extends State<AdminShell> {
       child: KeyedSubtree(key: ValueKey(_section), child: section),
     );
   }
-
-  Widget _barreHaut() {
-    final textes = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      height: 76,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35))),
-      ),
-      child: Row(
-        children: [
-          Text(_section.label, style: textes.headlineSmall),
-          const Spacer(),
-          AnimatedOpacity(
-            opacity: _modifie ? 1 : 0,
-            duration: const Duration(milliseconds: 200),
-            child: Row(
-              children: [
-                Icon(Icons.circle, size: 8, color: scheme.tertiary),
-                const SizedBox(width: 8),
-                Text('Modifications non enregistrées', style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant)),
-                const SizedBox(width: AppSpacing.md),
-              ],
-            ),
-          ),
-          _boutonEnregistrer(),
-        ],
-      ),
-    );
-  }
-
-  Widget _boutonEnregistrer() {
-    // Sur téléphone, juste l'icône pour laisser la place au titre.
-    if (Responsive.isCompact(context)) {
-      return IconButton.filled(
-        tooltip: 'Enregistrer',
-        onPressed: _modifie ? _enregistrer : null,
-        icon: const Icon(Icons.save_rounded),
-      );
-    }
-    return FilledButton.icon(
-      onPressed: _modifie ? _enregistrer : null,
-      icon: const Icon(Icons.save_rounded, size: 18),
-      label: const Text('Enregistrer'),
-    );
-  }
-
-  Widget _sidebar({required bool replie, bool dansDrawer = false}) {
-    final scheme = Theme.of(context).colorScheme;
-    final textes = Theme.of(context).textTheme;
-
-    Widget item(IconData icone, String label, VoidCallback onTap, {bool actif = false}) {
-      final contenu = AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 48,
-        padding: EdgeInsets.symmetric(horizontal: replie ? 0 : 14),
-        decoration: BoxDecoration(
-          color: actif ? scheme.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Row(
-          mainAxisAlignment: replie ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: [
-            Icon(icone, color: actif ? scheme.onPrimaryContainer : scheme.onSurfaceVariant),
-            if (!replie) ...[
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: textes.labelLarge!.copyWith(
-                    color: actif ? scheme.onPrimaryContainer : scheme.onSurface,
-                    fontWeight: actif ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Tooltip(
-          message: replie ? label : '',
-          child: InkWell(borderRadius: BorderRadius.circular(AppRadius.md), onTap: onTap, child: contenu),
-        ),
-      );
-    }
-
-    void aller(AdminSection section) {
-      setState(() => _section = section);
-      if (dansDrawer) {
-        Navigator.of(context).pop(); // ferme le menu
-      }
-    }
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      width: dansDrawer ? null : (replie ? 84 : 264),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        border: Border(right: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35))),
-      ),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // En-tête : la radio gérée.
-            SizedBox(
-              height: 56,
-              child: Row(
-                mainAxisAlignment: replie ? MainAxisAlignment.center : MainAxisAlignment.start,
-                children: [
-                  _LogoGere(radio: widget.radio, logo: _brouillon.logo),
-                  if (!replie) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.radio.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textes.titleSmall!.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          Text('Espace gérant', style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            for (final section in AdminSection.values)
-              item(
-                _section == section ? section.selectedIcon : section.icon,
-                section.label,
-                () => aller(section),
-                actif: _section == section,
-              ),
-            const Spacer(),
-            item(Icons.open_in_new_rounded, 'Voir ma page', _voirMaPage),
-            item(Icons.logout_rounded, 'Déconnexion', widget.onLogout),
-            if (!dansDrawer) ...[
-              const Divider(height: AppSpacing.lg),
-              item(
-                replie ? Icons.keyboard_double_arrow_right_rounded : Icons.keyboard_double_arrow_left_rounded,
-                'Réduire le menu',
-                () => setState(() => _replie = !_replie),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LogoGere extends StatelessWidget {
-  const _LogoGere({required this.radio, this.logo});
-
-  final CampusRadio radio;
-  final Uint8List? logo;
-
-  @override
-  Widget build(BuildContext context) => RadioLogo(url: radio.logoUrl, bytes: logo, size: 44, radius: AppRadius.sm);
 }
 
 // Réglages en cours de modification (le texte du site est dans un TextEditingController).
@@ -486,11 +399,11 @@ class AdminDraft {
   const AdminDraft({required this.afficherSite, this.logo, this.couleur, this.streamUrl});
 
   factory AdminDraft.depuis(RadioSettings reglages) => AdminDraft(
-        afficherSite: reglages.afficherSite,
-        logo: reglages.logo,
-        couleur: reglages.couleur,
-        streamUrl: reglages.streamUrl,
-      );
+    afficherSite: reglages.afficherSite,
+    logo: reglages.logo,
+    couleur: reglages.couleur,
+    streamUrl: reglages.streamUrl,
+  );
 
   final bool afficherSite;
   final Uint8List? logo;
@@ -503,11 +416,10 @@ class AdminDraft {
     Uint8List? Function()? logo,
     Color? Function()? couleur,
     String? Function()? streamUrl,
-  }) =>
-      AdminDraft(
-        afficherSite: afficherSite ?? this.afficherSite,
-        logo: logo != null ? logo() : this.logo,
-        couleur: couleur != null ? couleur() : this.couleur,
-        streamUrl: streamUrl != null ? streamUrl() : this.streamUrl,
-      );
+  }) => AdminDraft(
+    afficherSite: afficherSite ?? this.afficherSite,
+    logo: logo != null ? logo() : this.logo,
+    couleur: couleur != null ? couleur() : this.couleur,
+    streamUrl: streamUrl != null ? streamUrl() : this.streamUrl,
+  );
 }

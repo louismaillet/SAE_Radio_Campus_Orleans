@@ -21,11 +21,7 @@ class RadioLogo extends StatelessWidget {
     if (bytes != null) {
       image = Image.memory(bytes!, fit: BoxFit.contain);
     } else if (url != null) {
-      image = Image.network(
-        url!,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => icone,
-      );
+      image = Image.network(url!, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => icone);
     }
     return Container(
       width: size,
@@ -81,11 +77,7 @@ class CoverImage extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             ColoredBox(color: scheme.surfaceContainerHighest),
-            AnimatedOpacity(
-              opacity: frame == null ? 0 : 1,
-              duration: const Duration(milliseconds: 300),
-              child: child,
-            ),
+            AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 300), child: child),
           ],
         );
       },
@@ -105,10 +97,8 @@ class Skeleton extends StatefulWidget {
 }
 
 class _SkeletonState extends State<Skeleton> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+    ..repeat(reverse: true);
 
   @override
   void dispose() {

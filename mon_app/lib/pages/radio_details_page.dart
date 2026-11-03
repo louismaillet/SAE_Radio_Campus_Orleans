@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:webview_all/webview_all.dart';
@@ -14,6 +15,7 @@ import '../widgets/cards.dart';
 import '../widgets/glass.dart';
 import '../widgets/images.dart';
 import '../widgets/live.dart';
+import '../widgets/pressable.dart';
 import '../widgets/theme_toggle.dart';
 
 // Ce qu'il faut pour afficher la page : réglages du gérant et détail de l'API.
@@ -169,116 +171,61 @@ PlayerTrack? _trackDirect(CampusRadio radio, _Donnees donnees, RadioPalette pale
   );
 }
 
-// Grand en-tête : logo avec halo, nom, slogan et bouton du direct.
+// En-tête centré : logo avec halo, nom, slogan et grand bouton du direct.
 class _EnTete extends StatelessWidget {
-  const _EnTete({required this.radio, required this.donnees, required this.palette, this.dense = false});
+  const _EnTete({required this.radio, required this.donnees, required this.palette});
 
   final CampusRadio radio;
   final _Donnees donnees;
   final RadioPalette palette;
-  final bool dense; // version réduite au-dessus du site web
 
   @override
   Widget build(BuildContext context) {
     final textes = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final compact = Responsive.isCompact(context);
-    final centre = compact && !dense;
     final track = _trackDirect(radio, donnees, palette);
     final slogan = donnees.details?.catchPhrase;
-    final tailleLogo = dense ? 64.0 : (compact ? 120.0 : 168.0);
 
-    final logo = Hero(
-      tag: 'logo-${radio.id}',
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 800),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(tailleLogo * 0.28),
-          boxShadow: palette.halo(dense ? 0.6 : 1.2),
-        ),
-        child: RadioLogo(url: radio.logoUrl, bytes: donnees.reglages.logo, size: tailleLogo),
-      ),
-    );
-
-    final infos = Column(
-      crossAxisAlignment: centre ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+    return Column(
       children: [
+        Hero(
+          tag: 'logo-${radio.id}',
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 800),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(32), boxShadow: palette.halo(1.2)),
+            child: RadioLogo(url: radio.logoUrl, bytes: donnees.reglages.logo, size: 112),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           [if (radio.city != null) radio.city!, 'Réseau Radio Campus'].join(' · ').toUpperCase(),
+          textAlign: TextAlign.center,
           style: textes.labelMedium!.copyWith(color: scheme.primary, letterSpacing: 1.4, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text(
-          radio.name,
-          textAlign: centre ? TextAlign.center : TextAlign.start,
-          style: dense
-              ? textes.headlineSmall
-              : (compact ? textes.headlineLarge : textes.displayMedium)!.copyWith(height: 1.05),
-        ),
-        if (slogan != null && slogan.isNotEmpty && !dense) ...[
+        Text(radio.name, textAlign: TextAlign.center, style: textes.headlineMedium!.copyWith(height: 1.1)),
+        if (slogan != null && slogan.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
             slogan,
-            textAlign: centre ? TextAlign.center : TextAlign.start,
-            style: textes.titleMedium!.copyWith(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w400),
+            textAlign: TextAlign.center,
+            style: textes.bodyLarge!.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
-        if (track != null && !dense) ...[
+        if (track != null) ...[
           const SizedBox(height: AppSpacing.lg),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LiveButton(track: track, large: !compact),
-              const SizedBox(width: AppSpacing.md),
-              if (!compact) const LiveBadge(),
-            ],
+          // Bouton pleine largeur, facile à atteindre avec le pouce.
+          SizedBox(
+            width: double.infinity,
+            child: LiveButton(track: track),
           ),
         ],
       ],
     );
-
-    if (centre) {
-      return Column(children: [logo, const SizedBox(height: AppSpacing.lg), infos]);
-    }
-    return Row(
-      children: [
-        logo,
-        SizedBox(width: dense ? AppSpacing.md : AppSpacing.xl),
-        Expanded(child: infos),
-        if (dense && track != null) LiveButton(track: track, large: false),
-      ],
-    );
   }
 }
 
-// Barre du haut en verre : retour + bouton thème.
-class _BarreHaut extends StatelessWidget {
-  const _BarreHaut({required this.titre});
-
-  final String titre;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: Colors.transparent,
-      title: Text(titre),
-      flexibleSpace: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-          child: ColoredBox(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
-            child: const SizedBox.expand(),
-          ),
-        ),
-      ),
-      actions: const [ThemeToggleButton(), SizedBox(width: 8)],
-    );
-  }
-}
-
-// Radio avec site web : en-tête réduit puis le site dans une webview.
+// Radio avec site web : petite barre (retour, logo, nom, direct) puis le site en plein écran.
 class _WebsiteView extends StatefulWidget {
   const _WebsiteView({required this.radio, required this.donnees, required this.palette});
   final CampusRadio radio;
@@ -302,37 +249,38 @@ class _WebsiteViewState extends State<_WebsiteView> {
 
   @override
   Widget build(BuildContext context) {
-    final cote = Responsive.isCompact(context) ? AppSpacing.sm : AppSpacing.lg;
+    final textes = Theme.of(context).textTheme;
+    final track = _trackDirect(widget.radio, widget.donnees, widget.palette);
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(cote, AppSpacing.sm, cote, AppSpacing.md),
-            child: Glass(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  const BackButton(),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _EnTete(
-                      radio: widget.radio,
-                      donnees: widget.donnees,
-                      palette: widget.palette,
-                      dense: true,
-                    ),
+            padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+            child: Row(
+              children: [
+                const BackButton(),
+                Hero(
+                  tag: 'logo-${widget.radio.id}',
+                  child: RadioLogo(url: widget.radio.logoUrl, bytes: widget.donnees.reglages.logo, size: 40),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.radio.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textes.titleMedium,
                   ),
-                ],
-              ),
+                ),
+                if (track != null) PlayFab(track: track, size: 44),
+              ],
             ),
           ),
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(cote, 0, cote, cote),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                child: WebViewWidget(controller: _controller),
-              ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+              child: WebViewWidget(controller: _controller),
             ),
           ),
         ],
@@ -355,7 +303,10 @@ class _ContentView extends StatefulWidget {
 class _ContentViewState extends State<_ContentView> {
   late Future<List<RadioContent>> _contentFuture;
   String? _emissionChoisie; // filtre des podcasts (null = toutes)
-  int _nombrePodcasts = 12;
+  int _nombrePodcasts = 10;
+  // Le nom de la radio n'apparaît dans la barre du haut qu'une fois l'en-tête passé.
+  final ScrollController _scroll = ScrollController();
+  final ValueNotifier<bool> _titreVisible = ValueNotifier(false);
 
   RadioDetails get _details => widget.donnees.details!;
 
@@ -363,18 +314,25 @@ class _ContentViewState extends State<_ContentView> {
   void initState() {
     super.initState();
     _contentFuture = RadioRepository.getContent(_details.showSlugs);
+    _scroll.addListener(() => _titreVisible.value = _scroll.offset > 220);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _titreVisible.dispose();
+    super.dispose();
+  }
+
+  Future<void> _rafraichir() async {
+    setState(() => _contentFuture = RadioRepository.getContent(_details.showSlugs));
+    await _contentFuture.then((_) {}, onError: (Object _) {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final expanded = Responsive.isExpanded(context);
     final description = _details.description;
     final aDescription = description != null && description.trim().isNotEmpty;
-
-    final presentation = <Widget>[
-      if (aDescription) _Description(html: description),
-      _CarteInfos(radio: widget.radio, details: _details),
-    ];
 
     return FutureBuilder<List<RadioContent>>(
       future: _contentFuture,
@@ -392,102 +350,91 @@ class _ContentViewState extends State<_ContentView> {
           }
         }
 
-        return CustomScrollView(
-          slivers: [
-            _BarreHaut(titre: widget.radio.name),
-            SliverContent(
-              top: AppSpacing.lg,
-              sliver: SliverToBoxAdapter(
-                child: _EnTete(radio: widget.radio, donnees: widget.donnees, palette: widget.palette),
-              ),
-            ),
-            // Présentation + infos : côte à côte sur grand écran, l'une sous l'autre sinon.
-            SliverContent(
-              top: AppSpacing.xxl,
-              sliver: SliverToBoxAdapter(
-                child: expanded && aDescription
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 3, child: presentation[0]),
-                          const SizedBox(width: AppSpacing.lg),
-                          Expanded(flex: 2, child: presentation[1]),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          for (final bloc in presentation) ...[bloc, const SizedBox(height: AppSpacing.lg)],
-                        ],
-                      ),
-              ),
-            ),
-            if (_details.shows.isNotEmpty) ...[
-              const SliverContent(
-                top: AppSpacing.xxl,
+        return RefreshIndicator(
+          onRefresh: _rafraichir,
+          edgeOffset: MediaQuery.paddingOf(context).top + kToolbarHeight,
+          child: CustomScrollView(
+            controller: _scroll,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _BarreHaut(titre: widget.radio.name, visible: _titreVisible),
+              SliverContent(
+                top: AppSpacing.sm,
                 sliver: SliverToBoxAdapter(
-                  child: SectionHeader(title: 'Émissions', subtitle: 'Touchez une émission pour filtrer ses podcasts'),
+                  child: _EnTete(radio: widget.radio, donnees: widget.donnees, palette: widget.palette),
                 ),
               ),
-              SliverToBoxAdapter(child: _ListeEmissions(
-                shows: _details.shows,
-                choisie: _emissionChoisie,
-                onChanged: (slug) => setState(() {
-                  _emissionChoisie = slug;
-                  _nombrePodcasts = 12;
-                }),
-              )),
-            ],
-            const SliverContent(
-              top: AppSpacing.xxl,
-              sliver: SliverToBoxAdapter(child: SectionHeader(title: 'Podcasts')),
-            ),
-            ..._grillePodcasts(snapshot, podcasts),
-            const SliverContent(
-              top: AppSpacing.xxl,
-              sliver: SliverToBoxAdapter(child: SectionHeader(title: 'Actualités du réseau')),
-            ),
-            SliverContent(
-              bottom: AppSpacing.xxl,
-              sliver: news.isEmpty
-                  ? SliverToBoxAdapter(
-                      child: snapshot.hasData
-                          ? const EmptyState(message: 'Aucune actualité pour le moment.')
-                          : const Skeleton(height: 112),
-                    )
-                  : SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 640,
-                        mainAxisExtent: 112,
-                        mainAxisSpacing: AppSpacing.md,
-                        crossAxisSpacing: AppSpacing.md,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) => NewsCard(news: news[i]),
-                        childCount: news.length,
-                      ),
+              SliverContent(
+                top: AppSpacing.xl,
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      if (aDescription) ...[_Description(html: description), const SizedBox(height: AppSpacing.md)],
+                      _CarteInfos(radio: widget.radio, details: _details),
+                    ],
+                  ),
+                ),
+              ),
+              if (_details.shows.isNotEmpty) ...[
+                const SliverContent(
+                  top: AppSpacing.xl,
+                  sliver: SliverToBoxAdapter(
+                    child: SectionHeader(
+                      title: 'Émissions',
+                      subtitle: 'Touchez une émission pour filtrer ses podcasts',
                     ),
-            ),
-          ],
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _ListeEmissions(
+                    shows: _details.shows,
+                    choisie: _emissionChoisie,
+                    onChanged: (slug) => setState(() {
+                      _emissionChoisie = slug;
+                      _nombrePodcasts = 10;
+                    }),
+                  ),
+                ),
+              ],
+              const SliverContent(
+                top: AppSpacing.xl,
+                sliver: SliverToBoxAdapter(child: SectionHeader(title: 'Podcasts')),
+              ),
+              ..._listePodcasts(snapshot, podcasts),
+              const SliverContent(
+                top: AppSpacing.xl,
+                sliver: SliverToBoxAdapter(child: SectionHeader(title: 'Actualités du réseau')),
+              ),
+              SliverSafeArea(
+                top: false,
+                sliver: SliverContent(
+                  bottom: AppSpacing.xl,
+                  sliver: news.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: snapshot.hasData
+                              ? const EmptyState(message: 'Aucune actualité pour le moment.')
+                              : const Skeleton(height: 100),
+                        )
+                      : SliverList.separated(
+                          itemCount: news.length,
+                          separatorBuilder: (context, i) => const SizedBox(height: 10),
+                          itemBuilder: (context, i) => NewsCard(news: news[i]),
+                        ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  List<Widget> _grillePodcasts(AsyncSnapshot<List<RadioContent>> snapshot, List<RadioContent> podcasts) {
-    const grille = SliverGridDelegateWithMaxCrossAxisExtent(
-      maxCrossAxisExtent: 300,
-      mainAxisExtent: 310,
-      mainAxisSpacing: AppSpacing.md,
-      crossAxisSpacing: AppSpacing.md,
-    );
+  List<Widget> _listePodcasts(AsyncSnapshot<List<RadioContent>> snapshot, List<RadioContent> podcasts) {
     if (snapshot.hasError) {
       return [
         SliverContent(
           sliver: SliverToBoxAdapter(
-            child: EmptyState(
-              message: 'Podcasts indisponibles.',
-              onRetry: () => setState(() => _contentFuture = RadioRepository.getContent(_details.showSlugs)),
-            ),
+            child: EmptyState(message: 'Podcasts indisponibles.', onRetry: _rafraichir),
           ),
         ),
       ];
@@ -495,9 +442,10 @@ class _ContentViewState extends State<_ContentView> {
     if (!snapshot.hasData) {
       return [
         SliverContent(
-          sliver: SliverGrid(
-            gridDelegate: grille,
-            delegate: SliverChildBuilderDelegate((context, i) => const Skeleton(), childCount: 4),
+          sliver: SliverList.separated(
+            itemCount: 3,
+            separatorBuilder: (context, i) => const SizedBox(height: 10),
+            itemBuilder: (context, i) => const Skeleton(height: 86, radius: AppRadius.md),
           ),
         ),
       ];
@@ -512,32 +460,67 @@ class _ContentViewState extends State<_ContentView> {
     final affiches = podcasts.take(_nombrePodcasts).toList();
     return [
       SliverContent(
-        sliver: SliverGrid(
-          gridDelegate: grille,
-          delegate: SliverChildBuilderDelegate(
-            (context, i) => PodcastCard(
-              podcast: affiches[i],
-              radioName: widget.radio.name,
-              accent: widget.palette.seed,
-            ),
-            childCount: affiches.length,
-          ),
+        sliver: SliverList.separated(
+          itemCount: affiches.length,
+          separatorBuilder: (context, i) => const SizedBox(height: 10),
+          itemBuilder: (context, i) =>
+              PodcastTile(podcast: affiches[i], radioName: widget.radio.name, accent: widget.palette.seed),
         ),
       ),
       if (podcasts.length > affiches.length)
         SliverContent(
-          top: AppSpacing.lg,
+          top: AppSpacing.md,
           sliver: SliverToBoxAdapter(
-            child: Center(
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _nombrePodcasts += 12),
-                icon: const Icon(Icons.expand_more_rounded),
-                label: Text('Voir plus (${podcasts.length - affiches.length})'),
-              ),
+            child: OutlinedButton.icon(
+              onPressed: () => setState(() => _nombrePodcasts += 10),
+              icon: const Icon(Icons.expand_more_rounded),
+              label: Text('Voir plus (${podcasts.length - affiches.length})'),
             ),
           ),
         ),
     ];
+  }
+}
+
+// Barre du haut en verre : retour, nom de la radio (après défilement) et bouton thème.
+class _BarreHaut extends StatelessWidget {
+  const _BarreHaut({required this.titre, required this.visible});
+
+  final String titre;
+  final ValueListenable<bool> visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverAppBar(
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      title: ValueListenableBuilder<bool>(
+        valueListenable: visible,
+        builder: (context, montre, _) => AnimatedOpacity(
+          opacity: montre ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Text(titre, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+      ),
+      flexibleSpace: ValueListenableBuilder<bool>(
+        valueListenable: visible,
+        // Le fond n'apparaît qu'une fois l'en-tête passé, pour laisser voir le dégradé.
+        builder: (context, montre, _) => AnimatedOpacity(
+          opacity: montre ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: ColoredBox(
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+        ),
+      ),
+      actions: const [ThemeToggleButton(), SizedBox(width: 4)],
+    );
   }
 }
 
@@ -570,13 +553,13 @@ class _DescriptionState extends State<_Description> {
         'a': Style(color: scheme.primary),
       },
     );
-    return Glass(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+    return SurfaceCard(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('À propos', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.md),
+          Text('À propos', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -593,11 +576,10 @@ class _DescriptionState extends State<_Description> {
                     ).createShader(rect),
                     blendMode: BlendMode.dstIn,
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 240),
-                      child: ClipRect(child: SingleChildScrollView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        child: texte,
-                      )),
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      child: ClipRect(
+                        child: SingleChildScrollView(physics: const NeverScrollableScrollPhysics(), child: texte),
+                      ),
                     ),
                   ),
           ),
@@ -623,49 +605,42 @@ class _CarteInfos extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textes = Theme.of(context).textTheme;
     Widget ligne(IconData icone, String titre, String valeur) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(icone, size: 18, color: scheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(titre, style: textes.labelSmall!.copyWith(color: scheme.onSurfaceVariant)),
-                    const SizedBox(height: 2),
-                    Text(valeur, style: textes.bodyMedium),
-                  ],
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icone, size: 18, color: scheme.onPrimaryContainer),
           ),
-        );
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(titre, style: textes.labelSmall!.copyWith(color: scheme.onSurfaceVariant)),
+                Text(valeur, style: textes.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
 
-    return Glass(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+    return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Infos', style: textes.titleLarge),
-          const SizedBox(height: AppSpacing.sm),
+          Text('Infos', style: textes.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
           if (radio.city != null) ligne(Icons.location_city_rounded, 'Ville', radio.city!),
           if (details.address != null) ligne(Icons.place_outlined, 'Adresse', details.address!),
           if (details.email != null) ligne(Icons.mail_outline_rounded, 'Contact', details.email!),
           ligne(Icons.mic_none_rounded, 'Émissions', '${details.shows.length} à la grille'),
-          ligne(
-            Icons.sensors_rounded,
-            'Direct',
-            radio.streamUrl != null ? 'Disponible 24h/24' : 'Pas de flux direct',
-          ),
+          ligne(Icons.sensors_rounded, 'Direct', radio.streamUrl != null ? 'Disponible 24h/24' : 'Pas de flux direct'),
         ],
       ),
     );
@@ -686,54 +661,51 @@ class _ListeEmissions extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textes = Theme.of(context).textTheme;
     return SizedBox(
-      height: 176,
+      height: 150,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: cote),
         itemCount: shows.length,
-        separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
+        separatorBuilder: (context, i) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
           final show = shows[i];
           final active = show.slug == choisie;
           return SizedBox(
-            width: 200,
-            child: GestureDetector(
+            width: 150,
+            child: Pressable(
               onTap: () => onChanged(active ? null : show.slug),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(color: active ? scheme.primary : Colors.transparent, width: 2.5),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CoverImage(url: show.imageUrl, icon: Icons.mic_rounded),
-                            if (active)
-                              ColoredBox(
-                                color: scheme.primary.withValues(alpha: 0.35),
-                                child: const Center(child: Icon(Icons.filter_alt_rounded, color: Colors.white)),
-                              ),
-                          ],
-                        ),
+              builder: (context, pressed) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: active ? scheme.primary : Colors.transparent, width: 2.5),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CoverImage(url: show.imageUrl, icon: Icons.mic_rounded),
+                          if (active)
+                            ColoredBox(
+                              color: scheme.primary.withValues(alpha: 0.35),
+                              child: const Center(child: Icon(Icons.filter_alt_rounded, color: Colors.white)),
+                            ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      show.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textes.labelLarge!.copyWith(color: active ? scheme.primary : null),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    show.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textes.labelLarge!.copyWith(color: active ? scheme.primary : null, height: 1.2),
+                  ),
+                ],
               ),
             ),
           );

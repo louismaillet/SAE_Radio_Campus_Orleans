@@ -21,17 +21,12 @@ class _SectionScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cote = Responsive.isCompact(context) ? AppSpacing.md : AppSpacing.xl;
+    final cote = Responsive.sidePadding(context);
     return ListView(
-      padding: EdgeInsets.fromLTRB(cote, AppSpacing.lg, cote, AppSpacing.xxl),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
-          ),
-        ),
-      ],
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      // En bas : la place du bouton flottant "Enregistrer".
+      padding: EdgeInsets.fromLTRB(cote, AppSpacing.md, cote, 96),
+      children: children,
     );
   }
 }
@@ -50,7 +45,7 @@ class _Panneau extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textes = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -77,42 +72,29 @@ class _Panneau extends StatelessWidget {
   }
 }
 
-// Deux colonnes sur grand écran (contenu + colonne latérale), une seule sinon.
-class _DeuxColonnes extends StatelessWidget {
-  const _DeuxColonnes({required this.principal, required this.cote});
+// Blocs les uns sous les autres, espacés régulièrement.
+class _Blocs extends StatelessWidget {
+  const _Blocs({required this.children});
 
-  final List<Widget> principal;
-  final List<Widget> cote;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> espacer(List<Widget> blocs) => [
-          for (final bloc in blocs) ...[bloc, const SizedBox(height: AppSpacing.lg)],
-        ];
-    return LayoutBuilder(
-      builder: (context, contraintes) {
-        if (contraintes.maxWidth < 860) {
-          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: espacer([...principal, ...cote]));
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: espacer(principal))),
-            const SizedBox(width: AppSpacing.lg),
-            Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: espacer(cote))),
-          ],
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[if (i > 0) const SizedBox(height: AppSpacing.md), children[i]],
+      ],
     );
   }
 }
 
 String _libelleSource(PaletteSource source) => switch (source) {
-      PaletteSource.gerant => 'Couleur choisie par toi',
-      PaletteSource.logo => 'Couleur extraite de ton logo',
-      PaletteSource.api => 'Couleur de ta radio sur Radio Campus',
-      PaletteSource.defaut => 'Couleur du réseau',
-    };
+  PaletteSource.gerant => 'Couleur choisie par toi',
+  PaletteSource.logo => 'Couleur extraite de ton logo',
+  PaletteSource.api => 'Couleur de ta radio sur Radio Campus',
+  PaletteSource.defaut => 'Couleur du réseau',
+};
 
 // Mini-page de la radio avec ses couleurs, mise à jour à chaque réglage.
 class _ApercuPage extends StatelessWidget {
@@ -139,8 +121,8 @@ class _ApercuPage extends StatelessWidget {
             data: theme,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 500),
-              height: 220,
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              height: 190,
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 gradient: palette.fond(brightness),
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -233,7 +215,7 @@ class DashboardSection extends StatelessWidget {
 
           return _SectionScroll(
             children: [
-              Text('Bonjour !', style: textes.headlineMedium),
+              Text('Bonjour !', style: textes.headlineSmall),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Voici un résumé de ${radio.name}.',
@@ -271,19 +253,17 @@ class DashboardSection extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              _DeuxColonnes(
-                principal: [
+              _Blocs(
+                children: [
                   _Panneau(
                     titre: 'Derniers podcasts',
                     description: 'Les 5 derniers épisodes de tes émissions',
                     child: enCours
-                        ? const Skeleton(height: 200)
+                        ? const Skeleton(height: 160)
                         : podcasts.isEmpty
-                            ? const EmptyState(message: 'Aucun podcast publié pour le moment.')
-                            : _TableauPodcastsSimple(podcasts: podcasts.take(5).toList()),
+                        ? const EmptyState(message: 'Aucun podcast publié pour le moment.')
+                        : _ListePodcastsSimple(podcasts: podcasts.take(5).toList()),
                   ),
-                ],
-                cote: [
                   _ApercuPage(radio: radio, reglages: reglages, apercuFuture: apercuFuture, onVoir: onVoirMaPage),
                 ],
               ),
@@ -316,16 +296,18 @@ class _GrilleKpi extends StatelessWidget {
     final textes = Theme.of(context).textTheme;
     return LayoutBuilder(
       builder: (context, contraintes) {
-        final colonnes = contraintes.maxWidth > 900 ? 4 : (contraintes.maxWidth > 480 ? 2 : 1);
-        final largeur = (contraintes.maxWidth - AppSpacing.md * (colonnes - 1)) / colonnes;
+        // 2 x 2 sur téléphone, 4 sur une ligne sur tablette.
+        final colonnes = contraintes.maxWidth >= 560 ? 4 : 2;
+        final largeur = (contraintes.maxWidth - 12 * (colonnes - 1)) / colonnes;
         return Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
+          spacing: 12,
+          runSpacing: 12,
           children: [
             for (final kpi in kpis)
               Container(
                 width: largeur,
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                height: 124,
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   gradient: LinearGradient(
@@ -364,12 +346,22 @@ class _GrilleKpi extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const Spacer(),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
-                      child: Text(kpi.valeur, key: ValueKey(kpi.valeur), style: textes.headlineMedium),
+                      child: FittedBox(
+                        key: ValueKey(kpi.valeur),
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(kpi.valeur, style: textes.headlineSmall),
+                      ),
                     ),
-                    Text(kpi.titre, style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant)),
+                    Text(
+                      kpi.titre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant),
+                    ),
                   ],
                 ),
               ),
@@ -380,40 +372,45 @@ class _GrilleKpi extends StatelessWidget {
   }
 }
 
-class _TableauPodcastsSimple extends StatelessWidget {
-  const _TableauPodcastsSimple({required this.podcasts});
+class _ListePodcastsSimple extends StatelessWidget {
+  const _ListePodcastsSimple({required this.podcasts});
 
   final List<RadioContent> podcasts;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        horizontalMargin: 0,
-        columnSpacing: AppSpacing.lg,
-        columns: const [
-          DataColumn(label: Text('Titre')),
-          DataColumn(label: Text('Émission')),
-          DataColumn(label: Text('Date')),
-        ],
-        rows: [
-          for (final p in podcasts)
-            DataRow(
-              cells: [
-                DataCell(ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 260),
-                  child: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                )),
-                DataCell(ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 180),
-                  child: Text(p.showTitle ?? '—', maxLines: 1, overflow: TextOverflow.ellipsis),
-                )),
-                DataCell(Text(p.date)),
+    final textes = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        for (final p in podcasts)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox.square(dimension: 44, child: CoverImage(url: p.imageUrl)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: textes.bodyMedium),
+                      Text(
+                        [if (p.showTitle != null) p.showTitle!, p.date].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -470,14 +467,8 @@ class AppearanceSection extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Valider'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Valider')),
         ],
       ),
     );
@@ -498,7 +489,6 @@ class AppearanceSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final textes = Theme.of(context).textTheme;
     final reglagesApercu = RadioSettings(
       radioId: radio.id,
       afficherSite: brouillon.afficherSite,
@@ -509,8 +499,9 @@ class AppearanceSection extends StatelessWidget {
 
     return _SectionScroll(
       children: [
-        _DeuxColonnes(
-          principal: [
+        _Blocs(
+          children: [
+            _ApercuPage(radio: radio, reglages: reglagesApercu, apercuFuture: apercuFuture),
             _Panneau(
               titre: 'Quand on ouvre ma radio',
               description: brouillon.afficherSite
@@ -552,8 +543,8 @@ class AppearanceSection extends StatelessWidget {
               description: 'PNG ou JPG, 1 Mo maximum. Ses couleurs servent à colorer ta page.',
               child: Row(
                 children: [
-                  RadioLogo(url: radio.logoUrl, bytes: brouillon.logo, size: 96),
-                  const SizedBox(width: AppSpacing.lg),
+                  RadioLogo(url: radio.logoUrl, bytes: brouillon.logo, size: 72),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Wrap(
                       spacing: AppSpacing.sm,
@@ -567,7 +558,7 @@ class AppearanceSection extends StatelessWidget {
                         if (brouillon.logo != null)
                           TextButton(
                             onPressed: () => onChanged(brouillon.copyWith(logo: () => null)),
-                            child: const Text('Reprendre le logo Radio Campus'),
+                            child: const Text('Logo d\'origine'),
                           ),
                       ],
                     ),
@@ -596,7 +587,7 @@ class AppearanceSection extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(width: AppSpacing.lg),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Wrap(
                       spacing: AppSpacing.sm,
@@ -622,13 +613,6 @@ class AppearanceSection extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ],
-          cote: [
-            _ApercuPage(radio: radio, reglages: reglagesApercu, apercuFuture: apercuFuture),
-            Text(
-              "L'aperçu se met à jour en direct. Pense à enregistrer tes modifications.",
-              style: textes.bodySmall!.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -671,13 +655,17 @@ class StreamSection extends StatelessWidget {
         _Panneau(
           titre: 'Flux du direct',
           description: "C'est ce flux que lancent le bouton « Écouter en direct » et le lecteur.",
-          action: Chip(
-            avatar: Icon(personnalise ? Icons.edit_rounded : Icons.cloud_done_outlined, size: 16),
-            label: Text(personnalise ? 'Personnalisé' : "Fourni par l'API"),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Chip(
+                  avatar: Icon(personnalise ? Icons.edit_rounded : Icons.cloud_done_outlined, size: 16),
+                  label: Text(personnalise ? 'Personnalisé' : "Fourni par l'API"),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
@@ -720,14 +708,16 @@ class StreamSection extends StatelessWidget {
                 children: [
                   if (flux != null)
                     FilledButton.icon(
-                      onPressed: () => PlayerScope.read(context).play(PlayerTrack(
-                        url: flux,
-                        title: radio.name,
-                        subtitle: 'Test du flux',
-                        isLive: true,
-                        artworkUrl: radio.logoUrl,
-                        artworkBytes: brouillon.logo,
-                      )),
+                      onPressed: () => PlayerScope.read(context).play(
+                        PlayerTrack(
+                          url: flux,
+                          title: radio.name,
+                          subtitle: 'Test du flux',
+                          isLive: true,
+                          artworkUrl: radio.logoUrl,
+                          artworkBytes: brouillon.logo,
+                        ),
+                      ),
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text("Tester l'écoute"),
                     ),
@@ -798,10 +788,7 @@ class _DialogueFluxState extends State<_DialogueFlux> {
             keyboardType: TextInputType.url,
             validator: _valider,
             onFieldSubmitted: (_) => _ok(),
-            decoration: const InputDecoration(
-              hintText: 'https://…/live.mp3',
-              prefixIcon: Icon(Icons.sensors_rounded),
-            ),
+            decoration: const InputDecoration(hintText: 'https://…/live.mp3', prefixIcon: Icon(Icons.sensors_rounded)),
           ),
         ),
       ),

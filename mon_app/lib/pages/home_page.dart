@@ -44,6 +44,12 @@ class _HomePageState extends State<HomePage> {
     _radiosFuture = RadioRepository.getRadios();
   }
 
+  // Tirer la liste vers le bas : on recharge les radios et les logos.
+  Future<void> _rafraichir() async {
+    setState(_charger);
+    await Future.wait([_radiosFuture.then((_) {}, onError: (Object _) {}), _chargerLogos()]);
+  }
+
   Future<void> _chargerLogos() async {
     final logos = await RadioSettingsRepository.loadLogos();
     if (mounted) {
@@ -53,9 +59,7 @@ class _HomePageState extends State<HomePage> {
 
   // Ouvre l'espace gérant, puis recharge les logos au retour (il a pu en changer).
   Future<void> _ouvrirAdmin() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (context) => const AdminPage()),
-    );
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => const AdminPage()));
     _chargerLogos();
   }
 
@@ -83,16 +87,20 @@ class _HomePageState extends State<HomePage> {
   // L'utilisateur choisit une radio : on propose d'en faire sa radio par défaut
   // (sauf si c'est déjà le cas), puis on l'ouvre.
   Future<void> _choisirRadio(CampusRadio radio) async {
+    FocusScope.of(context).unfocus(); // ferme le clavier de la recherche
     if (radio.id == _radioParDefaut) {
       _openRadio(radio);
       return;
     }
-    final choix = await showDialog<_ChoixRadio>(
+    final choix = await showModalBottomSheet<_ChoixRadio>(
       context: context,
-      builder: (context) => _DialogueRadioParDefaut(radio: radio, logo: _logos[radio.id]),
+      showDragHandle: true,
+      // La feuille prend la hauteur de son contenu (et défile sur les petits écrans).
+      isScrollControlled: true,
+      builder: (context) => _FeuilleRadioParDefaut(radio: radio, logo: _logos[radio.id]),
     );
     if (choix == null || !mounted) {
-      return; // fenêtre fermée sans choisir
+      return; // feuille fermée sans choisir
     }
     if (choix == _ChoixRadio.parDefaut) {
       final prefs = await SharedPreferences.getInstance();
@@ -105,9 +113,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openRadio(CampusRadio radio) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)));
   }
 
   @override
@@ -117,16 +123,26 @@ class _HomePageState extends State<HomePage> {
         future: _radiosFuture,
         builder: (context, snapshot) {
           final radios = snapshot.data;
-          return CustomScrollView(
-            slivers: [
-              _barreHaut(context),
-              ..._sectionRadios(context, radios, erreur: snapshot.hasError),
-              SliverContent(
-                top: AppSpacing.xxl,
-                bottom: AppSpacing.xl,
-                sliver: SliverToBoxAdapter(child: _PiedDePage(nombreRadios: radios?.length)),
-              ),
-            ],
+          return RefreshIndicator(
+            onRefresh: _rafraichir,
+            edgeOffset: MediaQuery.paddingOf(context).top + kToolbarHeight + 64,
+            child: CustomScrollView(
+              // Faire défiler la liste ferme le clavier.
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                _barreHaut(context),
+                ..._sectionRadios(context, radios, erreur: snapshot.hasError),
+                SliverSafeArea(
+                  top: false,
+                  sliver: SliverContent(
+                    top: AppSpacing.xl,
+                    bottom: AppSpacing.lg,
+                    sliver: SliverToBoxAdapter(child: _PiedDePage(nombreRadios: radios?.length)),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -134,11 +150,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _barreHaut(BuildContext context) {
-    final compact = Responsive.isCompact(context);
     final scheme = Theme.of(context).colorScheme;
     return SliverAppBar(
       pinned: true,
-      toolbarHeight: 72,
       titleSpacing: Responsive.sidePadding(context),
       backgroundColor: Colors.transparent,
       // Verre dépoli : le contenu passe flouté sous la barre.
@@ -151,23 +165,18 @@ class _HomePageState extends State<HomePage> {
       title: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: [scheme.primary, scheme.tertiary]),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.graphic_eq_rounded, color: scheme.onPrimary, size: 22),
+            child: Icon(Icons.graphic_eq_rounded, color: scheme.onPrimary, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Flexible(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: 'Radio Campus'),
-                  if (!compact) TextSpan(text: ' France', style: TextStyle(color: scheme.primary)),
-                ],
-              ),
+            child: Text(
+              'Radio Campus',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w700),
@@ -177,36 +186,35 @@ class _HomePageState extends State<HomePage> {
       ),
       actions: [
         const ThemeToggleButton(),
-        const SizedBox(width: 8),
-        if (compact)
-          IconButton(
-            tooltip: 'Espace gérant',
-            onPressed: _ouvrirAdmin,
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-          )
-        else
-          OutlinedButton.icon(
-            onPressed: _ouvrirAdmin,
-            style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14)),
-            icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-            label: const Text('Espace gérant'),
-          ),
-        SizedBox(width: Responsive.sidePadding(context) - 8),
+        IconButton(
+          tooltip: 'Espace gérant',
+          onPressed: _ouvrirAdmin,
+          icon: const Icon(Icons.admin_panel_settings_outlined),
+        ),
+        SizedBox(width: Responsive.sidePadding(context) - 12),
       ],
+      // Recherche toujours visible sous le titre.
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 0, Responsive.sidePadding(context), 12),
+          child: _champRecherche(),
+        ),
+      ),
     );
   }
 
   List<Widget> _sectionRadios(BuildContext context, List<CampusRadio>? radios, {required bool erreur}) {
     final recherche = _recherche.toLowerCase();
     final filtrees = (radios ?? [])
-        .where((r) =>
-            r.name.toLowerCase().contains(recherche) || (r.city ?? '').toLowerCase().contains(recherche))
+        .where((r) => r.name.toLowerCase().contains(recherche) || (r.city ?? '').toLowerCase().contains(recherche))
         .toList();
-    const grille = SliverGridDelegateWithMaxCrossAxisExtent(
-      maxCrossAxisExtent: 220,
-      mainAxisExtent: 180,
-      mainAxisSpacing: AppSpacing.md,
-      crossAxisSpacing: AppSpacing.md,
+    // 2 colonnes sur téléphone, 3 sur tablette.
+    final grille = SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: Responsive.isTablet(context) ? 3 : 2,
+      mainAxisExtent: 168,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
     );
 
     Widget contenu;
@@ -221,7 +229,7 @@ class _HomePageState extends State<HomePage> {
     } else if (radios == null) {
       contenu = SliverGrid(
         gridDelegate: grille,
-        delegate: SliverChildBuilderDelegate((context, i) => const Skeleton(), childCount: 10),
+        delegate: SliverChildBuilderDelegate((context, i) => const Skeleton(), childCount: 8),
       );
     } else if (filtrees.isEmpty) {
       contenu = SliverToBoxAdapter(child: EmptyState(message: 'Aucune radio pour « $_recherche ».'));
@@ -229,11 +237,8 @@ class _HomePageState extends State<HomePage> {
       contenu = SliverGrid(
         gridDelegate: grille,
         delegate: SliverChildBuilderDelegate(
-          (context, i) => RadioCard(
-            radio: filtrees[i],
-            logo: _logos[filtrees[i].id],
-            onTap: () => _choisirRadio(filtrees[i]),
-          ),
+          (context, i) =>
+              RadioCard(radio: filtrees[i], logo: _logos[filtrees[i].id], onTap: () => _choisirRadio(filtrees[i])),
           childCount: filtrees.length,
         ),
       );
@@ -241,64 +246,73 @@ class _HomePageState extends State<HomePage> {
 
     return [
       SliverContent(
-        top: AppSpacing.lg,
+        top: AppSpacing.md,
         sliver: SliverToBoxAdapter(
           child: SectionHeader(
             title: 'Les radios du réseau',
             subtitle: radios == null ? null : '${radios.length} radios associatives et étudiantes',
-            trailing: Responsive.isCompact(context) ? null : SizedBox(width: 280, child: _champRecherche()),
           ),
         ),
       ),
-      if (Responsive.isCompact(context))
-        SliverContent(
-          bottom: AppSpacing.md,
-          sliver: SliverToBoxAdapter(child: _champRecherche()),
-        ),
       SliverContent(sliver: contenu),
     ];
   }
 
   Widget _champRecherche() => TextField(
-        onChanged: (texte) => setState(() => _recherche = texte.trim()),
-        decoration: const InputDecoration(
-          hintText: 'Rechercher une radio, une ville…',
-          prefixIcon: Icon(Icons.search_rounded),
-          isDense: true,
-        ),
-      );
+    onChanged: (texte) => setState(() => _recherche = texte.trim()),
+    textInputAction: TextInputAction.search,
+    decoration: const InputDecoration(
+      hintText: 'Rechercher une radio, une ville…',
+      prefixIcon: Icon(Icons.search_rounded),
+      isDense: true,
+    ),
+  );
 }
 
 enum _ChoixRadio { ouvrir, parDefaut }
 
-// Fenêtre qui propose de faire de cette radio la radio par défaut.
-class _DialogueRadioParDefaut extends StatelessWidget {
-  const _DialogueRadioParDefaut({required this.radio, this.logo});
+// Feuille du bas qui propose de faire de cette radio la radio par défaut.
+class _FeuilleRadioParDefaut extends StatelessWidget {
+  const _FeuilleRadioParDefaut({required this.radio, this.logo});
 
   final CampusRadio radio;
   final Uint8List? logo;
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: RadioLogo(url: radio.logoUrl, bytes: logo, size: 72),
-      title: Text(radio.name, textAlign: TextAlign.center),
-      content: const Text(
-        'Voulez-vous en faire votre radio par défaut ?\n'
-        'Elle s\'ouvrira directement au prochain lancement.',
-        textAlign: TextAlign.center,
+    final textes = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: RadioLogo(url: radio.logoUrl, bytes: logo, size: 72),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(radio.name, textAlign: TextAlign.center, style: textes.titleLarge),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'En faire votre radio par défaut ?\nElle s\'ouvrira directement au prochain lancement.',
+              textAlign: TextAlign.center,
+              style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_ChoixRadio.parDefaut),
+              child: const Text('Radio par défaut'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(_ChoixRadio.ouvrir),
+              child: const Text('Juste écouter'),
+            ),
+          ],
+        ),
       ),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(_ChoixRadio.ouvrir),
-          child: const Text('Juste écouter'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_ChoixRadio.parDefaut),
-          child: const Text('Radio par défaut'),
-        ),
-      ],
     );
   }
 }
@@ -312,16 +326,10 @@ class _PiedDePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final style = Theme.of(context).textTheme.bodySmall!.copyWith(color: scheme.onSurfaceVariant);
-    return Column(
-      children: [
-        const Divider(),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          'Radio Campus France · ${nombreRadios ?? 'Les'} radios du réseau, en direct et en podcast',
-          textAlign: TextAlign.center,
-          style: style,
-        ),
-      ],
+    return Text(
+      'Radio Campus France · ${nombreRadios ?? 'Les'} radios du réseau, en direct et en podcast',
+      textAlign: TextAlign.center,
+      style: style,
     );
   }
 }

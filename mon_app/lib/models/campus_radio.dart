@@ -106,11 +106,9 @@ class RadioDetails {
     final shows = <RadioShow>[];
     for (final show in json['radioshows']['member'] as List<dynamic>) {
       showSlugs.add(show['slug'] as String);
-      shows.add(RadioShow(
-        slug: show['slug'] as String,
-        title: show['title'] as String,
-        imageUrl: _imageUrl(show['imageUrl']),
-      ));
+      shows.add(
+        RadioShow(slug: show['slug'] as String, title: show['title'] as String, imageUrl: _imageUrl(show['imageUrl'])),
+      );
     }
     return RadioDetails(
       description: json['content'] as String?,

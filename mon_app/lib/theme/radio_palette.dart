@@ -40,8 +40,12 @@ class RadioPalette {
 
   // Halo lumineux derrière le logo ou les boutons.
   List<BoxShadow> halo([double force = 1]) => [
-        BoxShadow(color: seed.withValues(alpha: 0.45 * force), blurRadius: 60 * force, spreadRadius: -8),
-      ];
+    BoxShadow(
+      color: seed.withValues(alpha: 0.45 * force),
+      blurRadius: 60 * force,
+      spreadRadius: -8,
+    ),
+  ];
 }
 
 // Calcule la palette d'une radio. Ordre de priorité :
@@ -57,11 +61,7 @@ class RadioPaletteResolver {
   // Couleurs déjà extraites, pour ne pas analyser deux fois la même image.
   static final Map<String, Future<Color?>> _cache = {};
 
-  static Future<RadioPalette> resolve(
-    CampusRadio radio, {
-    RadioSettings? settings,
-    String? couleurApi,
-  }) async {
+  static Future<RadioPalette> resolve(CampusRadio radio, {RadioSettings? settings, String? couleurApi}) async {
     final couleurGerant = settings?.couleur;
     if (couleurGerant != null) {
       return RadioPalette(couleurGerant, PaletteSource.gerant);

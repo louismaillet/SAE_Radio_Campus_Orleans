@@ -19,10 +19,7 @@ class ThemeToggleButton extends StatelessWidget {
           turns: Tween(begin: 0.75, end: 1.0).animate(animation),
           child: FadeTransition(opacity: animation, child: child),
         ),
-        child: Icon(
-          sombre ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-          key: ValueKey(sombre),
-        ),
+        child: Icon(sombre ? Icons.light_mode_rounded : Icons.dark_mode_rounded, key: ValueKey(sombre)),
       ),
     );
   }

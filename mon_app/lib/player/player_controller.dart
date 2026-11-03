@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // Ce qui est en cours de lecture : un direct ou un podcast.
 class PlayerTrack {
@@ -57,14 +57,12 @@ class PlayerController extends ChangeNotifier {
   bool _playing = false;
   bool _loading = false;
   Duration? _duration;
-  double _volume = 1;
   String? _error;
 
   PlayerTrack? get track => _track;
   bool get isPlaying => _playing;
   bool get isLoading => _loading;
   Duration? get duration => _duration;
-  double get volume => _volume;
   String? get error => _error;
 
   // Ce morceau est-il celui du lecteur ? (pour afficher pause sur le bon bouton)
@@ -73,6 +71,7 @@ class PlayerController extends ChangeNotifier {
 
   // Lance un morceau. Si c'est celui en cours, on met en pause / reprend.
   Future<void> play(PlayerTrack track) async {
+    HapticFeedback.lightImpact();
     if (isCurrent(track.url) && _error == null) {
       return toggle();
     }
@@ -88,6 +87,7 @@ class PlayerController extends ChangeNotifier {
     if (track == null || _loading) {
       return;
     }
+    HapticFeedback.selectionClick();
     if (_playing) {
       // Un direct ne se met pas en pause : on l'arrête, et on reprendra en direct.
       await (track.isLive ? _player.stop() : _player.pause());
@@ -104,7 +104,7 @@ class PlayerController extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      await _player.play(UrlSource(_track!.url), volume: _volume);
+      await _player.play(UrlSource(_track!.url));
     } catch (_) {
       // Flux coupé, adresse http bloquée par le navigateur...
       _error = 'Lecture impossible pour le moment.';
@@ -116,10 +116,16 @@ class PlayerController extends ChangeNotifier {
 
   Future<void> seek(Duration cible) => _player.seek(cible);
 
-  Future<void> setVolume(double volume) async {
-    _volume = volume;
-    notifyListeners();
-    await _player.setVolume(volume);
+  // Recule ou avance dans le podcast, sans sortir de ses limites.
+  Future<void> skip(Duration decalage) {
+    var cible = position.value + decalage;
+    final duree = _duration;
+    if (cible < Duration.zero) {
+      cible = Duration.zero;
+    } else if (duree != null && cible > duree) {
+      cible = duree;
+    }
+    return _player.seek(cible);
   }
 
   // Ferme le lecteur du bas.
@@ -145,13 +151,12 @@ class PlayerController extends ChangeNotifier {
 // PlayerScope.of(context).play(...)
 class PlayerScope extends InheritedNotifier<PlayerController> {
   const PlayerScope({required PlayerController controller, required super.child, super.key})
-      : super(notifier: controller);
+    : super(notifier: controller);
 
   // Se reconstruit quand l'état du lecteur change.
   static PlayerController of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PlayerScope>()!.notifier!;
 
   // Juste pour appeler une action (dans un onPressed), sans s'abonner.
-  static PlayerController read(BuildContext context) =>
-      context.getInheritedWidgetOfExactType<PlayerScope>()!.notifier!;
+  static PlayerController read(BuildContext context) => context.getInheritedWidgetOfExactType<PlayerScope>()!.notifier!;
 }

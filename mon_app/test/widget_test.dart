@@ -67,15 +67,16 @@ void main() {
     expect(RadioSettings.parDefaut(_radio).fluxDirect(_radio), 'https://exemple.fr/live');
   });
 
-  testWidgets("l'accueil s'affiche, avec l'accès à l'espace gérant", (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1;
+  testWidgets("l'accueil s'affiche sur téléphone, avec la recherche et l'espace gérant", (tester) async {
+    tester.view.physicalSize = const Size(1080, 2340); // téléphone Android courant
+    tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(const RadioCampusApp());
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Espace gérant'), findsOneWidget);
+    expect(find.byTooltip('Espace gérant'), findsOneWidget);
     expect(find.text('Les radios du réseau'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
   });
 }

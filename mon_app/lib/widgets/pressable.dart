@@ -1,64 +1,41 @@
 import 'package:flutter/material.dart';
 
-// Donne à son contenu l'état "survolé" (souris) pour animer cartes et boutons.
-// Sur écran tactile, hovered reste à false.
-class HoverBuilder extends StatefulWidget {
-  const HoverBuilder({required this.builder, this.onTap, super.key});
+// Élément "appuyable" : il s'enfonce légèrement sous le doigt.
+// builder reçoit pressed pour animer d'autres détails (bordure, ombre...).
+class Pressable extends StatefulWidget {
+  const Pressable({required this.builder, this.onTap, this.onLongPress, super.key});
 
-  final Widget Function(BuildContext context, bool hovered) builder;
+  final Widget Function(BuildContext context, bool pressed) builder;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
-  State<HoverBuilder> createState() => _HoverBuilderState();
+  State<Pressable> createState() => _PressableState();
 }
 
-class _HoverBuilderState extends State<HoverBuilder> {
-  bool _hovered = false;
+class _PressableState extends State<Pressable> {
+  bool _pressed = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: widget.builder(context, _hovered),
-      ),
-    );
+  void _appui(bool valeur) {
+    if (_pressed != valeur) {
+      setState(() => _pressed = valeur);
+    }
   }
-}
-
-// Carte qui se soulève légèrement au survol.
-class HoverLift extends StatelessWidget {
-  const HoverLift({required this.child, this.onTap, this.glow, super.key});
-
-  final Widget child;
-  final VoidCallback? onTap;
-  final Color? glow; // couleur de l'ombre au survol
 
   @override
   Widget build(BuildContext context) {
-    final ombre = glow ?? Theme.of(context).colorScheme.primary;
-    return HoverBuilder(
-      onTap: onTap,
-      builder: (context, hovered) => AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, hovered ? -6 : 0, 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: ombre.withValues(alpha: hovered ? 0.28 : 0),
-              blurRadius: hovered ? 32 : 0,
-              offset: const Offset(0, 12),
-              spreadRadius: -10,
-            ),
-          ],
-        ),
-        child: child,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: widget.onTap == null ? null : (_) => _appui(true),
+      onTapUp: (_) => _appui(false),
+      onTapCancel: () => _appui(false),
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.builder(context, _pressed),
       ),
     );
   }

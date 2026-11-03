@@ -14,10 +14,8 @@ class LiveBadge extends StatefulWidget {
 }
 
 class _LiveBadgeState extends State<LiveBadge> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
+  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
+    ..repeat(reverse: true);
 
   @override
   void dispose() {
@@ -48,11 +46,9 @@ class _LiveBadgeState extends State<LiveBadge> with SingleTickerProviderStateMix
           const SizedBox(width: 6),
           Text(
             widget.label,
-            style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: AppColors.live,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall!.copyWith(color: AppColors.live, fontWeight: FontWeight.w700, letterSpacing: 1.2),
           ),
         ],
       ),
@@ -73,10 +69,7 @@ class PulseHalo extends StatefulWidget {
 }
 
 class _PulseHaloState extends State<PulseHalo> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1800),
-  );
+  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
 
   @override
   void initState() {
@@ -104,10 +97,7 @@ class _PulseHaloState extends State<PulseHalo> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _OndesPainter(_anim, widget.color, widget.active),
-      child: widget.child,
-    );
+    return CustomPaint(painter: _OndesPainter(_anim, widget.color, widget.active), child: widget.child);
   }
 }
 
@@ -132,16 +122,12 @@ class _OndesPainter extends CustomPainter {
         ..color = color.withValues(alpha: 0.45 * (1 - t))
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(agrandi, Radius.circular(agrandi.height / 2)),
-        peinture,
-      );
+      canvas.drawRRect(RRect.fromRectAndRadius(agrandi, Radius.circular(agrandi.height / 2)), peinture);
     }
   }
 
   @override
-  bool shouldRepaint(_OndesPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.active != active;
+  bool shouldRepaint(_OndesPainter oldDelegate) => oldDelegate.color != color || oldDelegate.active != active;
 }
 
 // Grand bouton "Écouter en direct" : pulse tant que la radio est à l'antenne,
@@ -200,10 +186,8 @@ class EqualizerBars extends StatefulWidget {
 }
 
 class _EqualizerBarsState extends State<EqualizerBars> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat();
+  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    ..repeat();
 
   @override
   void dispose() {

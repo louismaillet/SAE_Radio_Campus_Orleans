@@ -96,10 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                         validator: _obligatoire,
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      FilledButton(
-                        onPressed: _seConnecter,
-                        child: const Text('Se connecter'),
-                      ),
+                      FilledButton(onPressed: _seConnecter, child: const Text('Se connecter')),
                     ],
                   ),
                 ),
@@ -122,13 +119,13 @@ class _FondAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     Widget tache(Color couleur) => Container(
-          width: 420,
-          height: 420,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(colors: [couleur.withValues(alpha: 0.45), couleur.withValues(alpha: 0)]),
-          ),
-        );
+      width: 420,
+      height: 420,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [couleur.withValues(alpha: 0.45), couleur.withValues(alpha: 0)]),
+      ),
+    );
     return Stack(
       children: [
         Positioned(top: -120, left: -80, child: tache(scheme.primary)),

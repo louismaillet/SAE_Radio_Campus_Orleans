@@ -25,7 +25,7 @@ class ThemeController extends ValueNotifier<ThemeMode> {
 // Donne accès au ThemeController depuis n'importe quel widget.
 class ThemeScope extends InheritedNotifier<ThemeController> {
   const ThemeScope({required ThemeController controller, required super.child, super.key})
-      : super(notifier: controller);
+    : super(notifier: controller);
 
   static ThemeController of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<ThemeScope>()!.notifier!;

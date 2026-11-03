@@ -14,6 +14,7 @@ class RadioSettings {
     required this.siteUrl,
     required this.logo,
     required this.couleur,
+    this.streamUrl,
   });
 
   final String radioId; // le slug de la radio
@@ -21,6 +22,7 @@ class RadioSettings {
   final String? siteUrl;
   final Uint8List? logo; // l'image choisie par le gérant (null = logo de l'API)
   final Color? couleur; // couleur secondaire (null = couleur par défaut)
+  final String? streamUrl; // flux du direct choisi par le gérant (null = celui de l'API)
 
   // Réglages d'une radio que le gérant n'a jamais modifiée :
   // site web si la radio est dans la table des sites officiels, sinon version appli.
@@ -49,6 +51,7 @@ class RadioSettings {
       'siteUrl': siteUrl,
       'logo': logoTexte,
       'couleur': couleurNombre,
+      'streamUrl': streamUrl,
     };
   }
 
@@ -69,8 +72,12 @@ class RadioSettings {
       siteUrl: json['siteUrl'] as String?,
       logo: logo,
       couleur: couleur,
+      streamUrl: json['streamUrl'] as String?,
     );
   }
+
+  // Flux du direct à lire : celui du gérant, sinon celui de l'API.
+  String? fluxDirect(CampusRadio radio) => streamUrl ?? radio.streamUrl;
 }
 
 // Lecture et enregistrement des réglages.

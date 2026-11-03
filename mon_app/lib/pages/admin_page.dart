@@ -33,6 +33,7 @@ class _AdminPageState extends State<AdminPage> {
   void initState() {
     super.initState();
     _radiosFuture = RadioRepository.getRadios();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _connexion());
   }
 
   @override
@@ -45,13 +46,30 @@ class _AdminPageState extends State<AdminPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texte)));
   }
 
-  // On charge les réglages déjà enregistrés de la radio choisie.
-  // Radio choisie : connexion d'abord, puis on charge ses réglages.
-  Future<void> _choisirRadio(CampusRadio radio) async {
-    final connecte = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(builder: (context) => LoginPage(radio: radio)),
+  
+  Future<void> _connexion() async {
+    final slug = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(builder: (context) => const LoginPage()),
     );
-    if (connecte != true || !mounted) {
+    if (!mounted) {
+      return;
+    }
+    if (slug == null) {
+      Navigator.of(context).pop(); 
+      return;
+    }
+    final radios = await _radiosFuture;
+    CampusRadio? radio;
+    for (final candidate in radios) {
+      if (candidate.id == slug) {
+        radio = candidate;
+      }
+    }
+    if (radio == null) {
+      if (mounted) {
+        _message('Radio introuvable : $slug');
+        Navigator.of(context).pop();
+      }
       return;
     }
     final reglages = await RadioSettingsRepository.load(radio);
@@ -157,36 +175,15 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Espace gérant')),
-      body: FutureBuilder<List<CampusRadio>>(
-        future: _radiosFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final choix = <DropdownMenuItem<CampusRadio>>[];
-          for (final radio in snapshot.data!) {
-            choix.add(DropdownMenuItem(value: radio, child: Text(radio.name)));
-          }
-
-          final widgets = <Widget>[
-            DropdownButton<CampusRadio>(
-              value: _radio,
-              isExpanded: true,
-              hint: const Text('Choisis la radio que tu gères'),
-              items: choix,
-              onChanged: (radio) {
-                if (radio != null) {
-                  _choisirRadio(radio);
-                }
-              },
+      body: _radio == null
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(_radio!.name, style: Theme.of(context).textTheme.headlineSmall),
+                ..._formulaire(),
+              ],
             ),
-          ];
-          if (_radio != null) {
-            widgets.addAll(_formulaire());
-          }
-          return ListView(padding: const EdgeInsets.all(16), children: widgets);
-        },
-      ),
     );
   }
 

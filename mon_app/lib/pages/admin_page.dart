@@ -6,10 +6,11 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
+import 'login_page.dart';
 
 // Page admin : le gérant d'une radio règle l'affichage de sa page.
-// Pour l'instant il choisit sa radio dans une liste ; plus tard ce sera
-// la page de connexion qui dira quelle radio il gère.
+// Le gérant choisit sa radio, se connecte, puis règle l'affichage de sa page :
+// chaque gérant ne règle que sa propre radio.
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
 
@@ -21,7 +22,7 @@ class _AdminPageState extends State<AdminPage> {
   late Future<List<CampusRadio>> _radiosFuture;
   final TextEditingController _siteController = TextEditingController();
 
-  // Radio gérée (null tant qu'il n'en a pas choisi).
+  // Radio gérée (null tant qu'il n'est pas connecté à une radio).
   CampusRadio? _radio;
   // Réglages en cours de modification (enregistrés seulement avec le bouton).
   bool _afficherSite = false;
@@ -45,7 +46,14 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   // On charge les réglages déjà enregistrés de la radio choisie.
+  // Radio choisie : connexion d'abord, puis on charge ses réglages.
   Future<void> _choisirRadio(CampusRadio radio) async {
+    final connecte = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (context) => LoginPage(radio: radio)),
+    );
+    if (connecte != true || !mounted) {
+      return;
+    }
     final reglages = await RadioSettingsRepository.load(radio);
     if (!mounted) {
       return;
@@ -160,7 +168,6 @@ class _AdminPageState extends State<AdminPage> {
             choix.add(DropdownMenuItem(value: radio, child: Text(radio.name)));
           }
 
-          // Choix de la radio gérée (temporaire, en attendant la connexion).
           final widgets = <Widget>[
             DropdownButton<CampusRadio>(
               value: _radio,

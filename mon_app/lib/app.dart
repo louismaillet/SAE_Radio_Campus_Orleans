@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'pages/home_page.dart';
 import 'player/player_controller.dart';
+import 'player/player_notification.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
@@ -21,6 +22,13 @@ class _RadioCampusAppState extends State<RadioCampusApp> {
   final ThemeController _theme = ThemeController()..load();
   // Permet au mini-lecteur (hors du Navigator) d'ouvrir le lecteur plein écran.
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Notification "lecteur" quand on quitte l'app (Android).
+    PlayerNotification.demarrer(_player);
+  }
 
   @override
   void dispose() {

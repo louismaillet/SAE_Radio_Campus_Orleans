@@ -7,10 +7,11 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
 import '../widgets/notification_form.dart';
+import 'login_page.dart';
 
 // Page admin : le gérant d'une radio règle l'affichage de sa page.
-// Pour l'instant il choisit sa radio dans une liste ; plus tard ce sera
-// la page de connexion qui dira quelle radio il gère.
+// Le gérant choisit sa radio, se connecte, puis règle l'affichage de sa page :
+// chaque gérant ne règle que sa propre radio.
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
 
@@ -22,8 +23,10 @@ class _AdminPageState extends State<AdminPage> {
   late Future<List<CampusRadio>> _radiosFuture;
   final TextEditingController _siteController = TextEditingController();
 
-  // Radio gérée (null tant qu'il n'en a pas choisi).
+  // Radio gérée (null tant qu'il n'est pas connecté à une radio).
   CampusRadio? _radio;
+  // Le gérant connecté (null tant qu'il n'est pas connecté).
+  GerantConnecte? _gerant;
   // Réglages en cours de modification (enregistrés seulement avec le bouton).
   bool _afficherSite = false;
   Uint8List? _logo;
@@ -33,6 +36,7 @@ class _AdminPageState extends State<AdminPage> {
   void initState() {
     super.initState();
     _radiosFuture = RadioRepository.getRadios();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _connexion());
   }
 
   @override
@@ -45,13 +49,38 @@ class _AdminPageState extends State<AdminPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texte)));
   }
 
-  // On charge les réglages déjà enregistrés de la radio choisie.
-  Future<void> _choisirRadio(CampusRadio radio) async {
+  
+  Future<void> _connexion() async {
+    final gerant = await Navigator.of(context).push<GerantConnecte>(
+      MaterialPageRoute<GerantConnecte>(builder: (context) => const LoginPage()),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (gerant == null) {
+      Navigator.of(context).pop(); 
+      return;
+    }
+    final radios = await _radiosFuture;
+    CampusRadio? radio;
+    for (final candidate in radios) {
+      if (candidate.id == gerant.slug) {
+        radio = candidate;
+      }
+    }
+    if (radio == null) {
+      if (mounted) {
+        _message('Radio introuvable : ${gerant.slug}');
+        Navigator.of(context).pop();
+      }
+      return;
+    }
     final reglages = await RadioSettingsRepository.load(radio);
     if (!mounted) {
       return;
     }
     setState(() {
+      _gerant = gerant;
       _radio = radio;
       _afficherSite = reglages.afficherSite;
       _siteController.text = reglages.siteUrl ?? '';
@@ -150,37 +179,15 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Espace gérant')),
-      body: FutureBuilder<List<CampusRadio>>(
-        future: _radiosFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final choix = <DropdownMenuItem<CampusRadio>>[];
-          for (final radio in snapshot.data!) {
-            choix.add(DropdownMenuItem(value: radio, child: Text(radio.name)));
-          }
-
-          // Choix de la radio gérée (temporaire, en attendant la connexion).
-          final widgets = <Widget>[
-            DropdownButton<CampusRadio>(
-              value: _radio,
-              isExpanded: true,
-              hint: const Text('Choisis la radio que tu gères'),
-              items: choix,
-              onChanged: (radio) {
-                if (radio != null) {
-                  _choisirRadio(radio);
-                }
-              },
+      body: _radio == null
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(_radio!.name, style: Theme.of(context).textTheme.headlineSmall),
+                ..._formulaire(),
+              ],
             ),
-          ];
-          if (_radio != null) {
-            widgets.addAll(_formulaire());
-          }
-          return ListView(padding: const EdgeInsets.all(16), children: widgets);
-        },
-      ),
     );
   }
 
@@ -292,7 +299,7 @@ class _AdminPageState extends State<AdminPage> {
     // Notifications push aux auditeurs.
     widgets.add(const Divider(height: 48));
     // La "key" recrée le formulaire quand le gérant change de radio.
-    widgets.add(NotificationForm(key: ValueKey(_radio!.id), radio: _radio!));
+    widgets.add(NotificationForm(key: ValueKey(_radio!.id), radio: _radio!, gerant: _gerant!));
     return widgets;
   }
 }

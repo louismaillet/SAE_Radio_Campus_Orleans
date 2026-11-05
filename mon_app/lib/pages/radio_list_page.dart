@@ -35,18 +35,15 @@ class _RadioListPageState extends State<RadioListPage> {
   Future<void> _chargerLogos() async {
     final logos = await RadioSettingsRepository.loadLogos();
     if (mounted) {
-      setState(() {
-        _logos = logos;
-      });
+      setState(() => _logos = logos);
     }
   }
 
-  // Bouton temporaire : plus tard on passera par la page de connexion.
+  // Ouvre l'espace gérant, puis recharge les logos au retour (il a pu en changer).
   Future<void> _ouvrirAdmin() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (context) => const AdminPage()),
     );
-    // Le gérant a peut-être changé son logo.
     _chargerLogos();
   }
 

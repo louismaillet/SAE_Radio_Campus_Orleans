@@ -1,5 +1,6 @@
 package com.example.mon_app
 
-import io.flutter.embedding.android.FlutterActivity
+import com.ryanheise.audioservice.AudioServiceActivity
 
-class MainActivity : FlutterActivity()
+// AudioServiceActivity (une FlutterActivity) : exigée par audio_service pour la notification "lecteur".
+class MainActivity : AudioServiceActivity()

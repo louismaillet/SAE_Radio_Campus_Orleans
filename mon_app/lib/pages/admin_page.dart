@@ -6,6 +6,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
+import '../widgets/notification_form.dart';
 import 'login_page.dart';
 
 // Page admin : le gérant d'une radio règle l'affichage de sa page.
@@ -24,6 +25,8 @@ class _AdminPageState extends State<AdminPage> {
 
   // Radio gérée (null tant qu'il n'est pas connecté à une radio).
   CampusRadio? _radio;
+  // Le gérant connecté (null tant qu'il n'est pas connecté).
+  GerantConnecte? _gerant;
   // Réglages en cours de modification (enregistrés seulement avec le bouton).
   bool _afficherSite = false;
   Uint8List? _logo;
@@ -48,26 +51,26 @@ class _AdminPageState extends State<AdminPage> {
 
   
   Future<void> _connexion() async {
-    final slug = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(builder: (context) => const LoginPage()),
+    final gerant = await Navigator.of(context).push<GerantConnecte>(
+      MaterialPageRoute<GerantConnecte>(builder: (context) => const LoginPage()),
     );
     if (!mounted) {
       return;
     }
-    if (slug == null) {
+    if (gerant == null) {
       Navigator.of(context).pop(); 
       return;
     }
     final radios = await _radiosFuture;
     CampusRadio? radio;
     for (final candidate in radios) {
-      if (candidate.id == slug) {
+      if (candidate.id == gerant.slug) {
         radio = candidate;
       }
     }
     if (radio == null) {
       if (mounted) {
-        _message('Radio introuvable : $slug');
+        _message('Radio introuvable : ${gerant.slug}');
         Navigator.of(context).pop();
       }
       return;
@@ -77,6 +80,7 @@ class _AdminPageState extends State<AdminPage> {
       return;
     }
     setState(() {
+      _gerant = gerant;
       _radio = radio;
       _afficherSite = reglages.afficherSite;
       _siteController.text = reglages.siteUrl ?? '';
@@ -291,6 +295,11 @@ class _AdminPageState extends State<AdminPage> {
         label: const Text('Enregistrer'),
       ),
     );
+
+    // Notifications push aux auditeurs.
+    widgets.add(const Divider(height: 48));
+    // La "key" recrée le formulaire quand le gérant change de radio.
+    widgets.add(NotificationForm(key: ValueKey(_radio!.id), radio: _radio!, gerant: _gerant!));
     return widgets;
   }
 }

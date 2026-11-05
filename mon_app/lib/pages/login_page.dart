@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Page de connexion du gérant. Le serveur retrouve sa radio : la page se ferme avec le slug de cette radio.
+// Page de connexion du gérant. Le serveur retrouve sa radio : la page se ferme avec un GerantConnecte (radio, nom, mot de passe).
+// Gérant connecté : sa radio, plus son nom et son mot de passe, que le serveur
+// revérifie quand il envoie une notification.
+class GerantConnecte {
+  const GerantConnecte({
+    required this.slug,
+    required this.utilisateur,
+    required this.motDePasse,
+  });
+
+  final String slug; // la radio qu'il gère
+  final String utilisateur;
+  final String motDePasse;
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -46,7 +60,13 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     if (mounted) {
-      Navigator.of(context).pop(slug);
+      Navigator.of(context).pop(
+        GerantConnecte(
+          slug: slug,
+          utilisateur: _utilisateurController.text.trim(),
+          motDePasse: _motDePasseController.text,
+        ),
+      );
     }
   }
 

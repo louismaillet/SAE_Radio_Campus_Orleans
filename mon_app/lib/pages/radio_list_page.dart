@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
+import '../services/notification_service.dart';
 import 'admin_page.dart';
 import 'radio_details_page.dart';
 
@@ -54,6 +55,8 @@ class _RadioListPageState extends State<RadioListPage> {
     if (radioId == null) {
       return; // première ouverture : on laisse l'utilisateur choisir
     }
+    // On (re)vérifie l'abonnement aux notifications de cette radio.
+    NotificationService.abonnerRadio(null, radioId);
     final radios = await _radiosFuture;
     if (!mounted) {
       return;
@@ -103,7 +106,10 @@ class _RadioListPageState extends State<RadioListPage> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
+    final ancienneRadio = prefs.getString(_cleRadioChoisie);
     await prefs.setString(_cleRadioChoisie, radio.id);
+    // Notifications : on passe de l'ancienne radio par défaut à la nouvelle.
+    NotificationService.abonnerRadio(ancienneRadio, radio.id);
     if (!mounted) {
       return;
     }

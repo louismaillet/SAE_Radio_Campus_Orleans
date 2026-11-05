@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../theme/app_theme.dart';
+import '../widgets/glass.dart';
+
 // Page de connexion du gérant. Le serveur retrouve sa radio : la page se ferme avec un GerantConnecte (radio, nom, mot de passe).
 // Gérant connecté : sa radio, plus son nom et son mot de passe, que le serveur
 // revérifie quand il envoie une notification.
@@ -27,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _utilisateurController = TextEditingController();
   final _motDePasseController = TextEditingController();
+  bool _masquerMotDePasse = true;
 
   @override
   void dispose() {
@@ -78,36 +82,87 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textes = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Connexion')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _utilisateurController,
-                decoration: const InputDecoration(labelText: "Nom d'utilisateur"),
-                textInputAction: TextInputAction.next,
-                validator: _obligatoire,
+      appBar: AppBar(leading: const BackButton()),
+      extendBodyBehindAppBar: true,
+      body: _FondAdmin(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Glass(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Connexion', textAlign: TextAlign.center, style: textes.headlineSmall),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _utilisateurController,
+                        decoration: const InputDecoration(
+                          labelText: "Nom d'utilisateur",
+                          prefixIcon: Icon(Icons.person_outline_rounded),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        validator: _obligatoire,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        controller: _motDePasseController,
+                        decoration: InputDecoration(
+                          labelText: 'Mot de passe',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            tooltip: _masquerMotDePasse ? 'Afficher' : 'Masquer',
+                            onPressed: () => setState(() => _masquerMotDePasse = !_masquerMotDePasse),
+                            icon: Icon(_masquerMotDePasse ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                          ),
+                        ),
+                        obscureText: _masquerMotDePasse,
+                        onFieldSubmitted: (_) => _seConnecter(),
+                        validator: _obligatoire,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      FilledButton(onPressed: _seConnecter, child: const Text('Se connecter')),
+                    ],
+                  ),
+                ),
               ),
-              TextFormField(
-                controller: _motDePasseController,
-                decoration: const InputDecoration(labelText: 'Mot de passe'),
-                obscureText: true,
-                onFieldSubmitted: (_) => _seConnecter(),
-                validator: _obligatoire,
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _seConnecter,
-                child: const Text('Se connecter'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// Fond de l'espace gérant : deux taches de couleur floues derrière le verre.
+class _FondAdmin extends StatelessWidget {
+  const _FondAdmin({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget tache(Color couleur) => Container(
+      width: 420,
+      height: 420,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [couleur.withValues(alpha: 0.45), couleur.withValues(alpha: 0)]),
+      ),
+    );
+    return Stack(
+      children: [
+        Positioned(top: -120, left: -80, child: tache(scheme.primary)),
+        Positioned(bottom: -140, right: -60, child: tache(scheme.tertiary)),
+        Positioned.fill(child: child),
+      ],
     );
   }
 }

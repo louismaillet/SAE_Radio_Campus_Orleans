@@ -6,6 +6,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
+import '../widgets/notification_form.dart';
 
 // Page admin : le gérant d'une radio règle l'affichage de sa page.
 // Pour l'instant il choisit sa radio dans une liste ; plus tard ce sera
@@ -287,6 +288,11 @@ class _AdminPageState extends State<AdminPage> {
         label: const Text('Enregistrer'),
       ),
     );
+
+    // Notifications push aux auditeurs.
+    widgets.add(const Divider(height: 48));
+    // La "key" recrée le formulaire quand le gérant change de radio.
+    widgets.add(NotificationForm(key: ValueKey(_radio!.id), radio: _radio!));
     return widgets;
   }
 }

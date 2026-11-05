@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/campus_radio.dart';
 import '../models/radio_settings.dart';
+import '../services/notification_service.dart';
 import 'admin_page.dart';
 import 'radio_details_page.dart';
 
@@ -27,7 +28,26 @@ class _RadioListPageState extends State<RadioListPage> {
   void initState() {
     super.initState();
     _radiosFuture = RadioRepository.getRadios();
+    _chargerLogos();
     _ouvrirRadioMemorisee();
+  }
+
+  Future<void> _chargerLogos() async {
+    final logos = await RadioSettingsRepository.loadLogos();
+    if (mounted) {
+      setState(() {
+        _logos = logos;
+      });
+    }
+  }
+
+  // Bouton temporaire : plus tard on passera par la page de connexion.
+  Future<void> _ouvrirAdmin() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (context) => const AdminPage()),
+    );
+    // Le gérant a peut-être changé son logo.
+    _chargerLogos();
   }
 
   // Si une radio a déjà été choisie lors d'une ouverture précédente,
@@ -38,6 +58,8 @@ class _RadioListPageState extends State<RadioListPage> {
     if (radioId == null) {
       return; // première ouverture : on laisse l'utilisateur choisir
     }
+    // On (re)vérifie l'abonnement aux notifications de cette radio.
+    NotificationService.abonnerRadio(null, radioId);
     final radios = await _radiosFuture;
     if (!mounted) {
       return;
@@ -87,7 +109,10 @@ class _RadioListPageState extends State<RadioListPage> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
+    final ancienneRadio = prefs.getString(_cleRadioChoisie);
     await prefs.setString(_cleRadioChoisie, radio.id);
+    // Notifications : on passe de l'ancienne radio par défaut à la nouvelle.
+    NotificationService.abonnerRadio(ancienneRadio, radio.id);
     if (!mounted) {
       return;
     }

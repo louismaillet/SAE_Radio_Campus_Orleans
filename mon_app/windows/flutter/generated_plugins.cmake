@@ -3,7 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   audioplayers_windows
+  firebase_core
+  url_launcher_windows
   webview_all_windows
 )
 

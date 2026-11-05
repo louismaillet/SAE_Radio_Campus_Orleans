@@ -97,3 +97,9 @@ Thumbs.db
 *.md
 !README.md
 !api-radiocampus.md
+
+
+pubspec.lock
+pubspec.yaml
+GeneratedPluginRegistrant.swift
+LANCER_APP.txt

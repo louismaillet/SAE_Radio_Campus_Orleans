@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   Map<String, Uint8List> _logos = {};
   String? _radioParDefaut;
   String _recherche = '';
+  bool _redirection = true;
 
   @override
   void initState() {
@@ -69,21 +70,26 @@ class _HomePageState extends State<HomePage> {
   Future<void> _ouvrirRadioMemorisee() async {
     final prefs = await SharedPreferences.getInstance();
     final radioId = prefs.getString(_cleRadioChoisie);
-    if (radioId == null) {
-      return; // première ouverture : on laisse l'utilisateur choisir
+    if (radioId != null) {
+      // On (re)vérifie l'abonnement aux notifications de cette radio.
+      NotificationService.abonnerRadio(null, radioId);
+      _radioParDefaut = radioId;
+      try {
+        final radios = await _radiosFuture;
+        for (final radio in radios) {
+          if (radio.id == radioId && mounted) {
+            Navigator.of(context).push(
+              PageRouteBuilder<void>(
+                transitionDuration: Duration.zero,
+                pageBuilder: (context, animation, secondaryAnimation) => RadioDetailsPage(radio: radio),
+              ),
+            );
+          }
+        }
+      } catch (_) {}
     }
-    // On (re)vérifie l'abonnement aux notifications de cette radio.
-    NotificationService.abonnerRadio(null, radioId);
-    setState(() => _radioParDefaut = radioId);
-    final radios = await _radiosFuture;
-    if (!mounted) {
-      return;
-    }
-    for (final radio in radios) {
-      if (radio.id == radioId) {
-        _openRadio(radio);
-        return;
-      }
+    if (mounted) {
+      setState(() => _redirection = false);
     }
   }
 
@@ -124,6 +130,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_redirection) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       body: FutureBuilder<List<CampusRadio>>(
         future: _radiosFuture,

@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/audioplayers.dart' show PlayerState;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'lecteur.dart';
 
 // Ce qui est en cours de lecture : un direct ou un podcast.
 class PlayerTrack {
@@ -49,7 +51,7 @@ class PlayerController extends ChangeNotifier {
     ]);
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  final Lecteur _player = Lecteur();
   final List<StreamSubscription<Object?>> _abonnements = [];
   final ValueNotifier<Duration> position = ValueNotifier(Duration.zero);
 
@@ -104,7 +106,7 @@ class PlayerController extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      await _player.play(UrlSource(_track!.url));
+      await _player.play(_track!.url);
     } catch (_) {
       // Flux coupé, adresse http bloquée par le navigateur...
       _error = 'Lecture impossible pour le moment.';

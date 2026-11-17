@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -27,7 +28,10 @@ class _RadioCampusAppState extends State<RadioCampusApp> {
   void initState() {
     super.initState();
     // Notification "lecteur" quand on quitte l'app (Android).
-    PlayerNotification.demarrer(_player);
+    // Pas sur le web : audio_service y plante.
+    if (!kIsWeb) {
+      PlayerNotification.demarrer(_player);
+    }
   }
 
   @override

@@ -21,7 +21,7 @@ class RadioLogo extends StatelessWidget {
     if (bytes != null) {
       image = Image.memory(bytes!, fit: BoxFit.contain);
     } else if (url != null) {
-      image = Image.network(url!, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => icone);
+      image = Image.network(url!, fit: BoxFit.contain, webHtmlElementStrategy: WebHtmlElementStrategy.prefer, errorBuilder: (context, error, stackTrace) => icone);
     }
     return Container(
       width: size,
@@ -67,6 +67,8 @@ class CoverImage extends StatelessWidget {
     return Image.network(
       url!,
       fit: BoxFit.cover,
+      // Web : balise <img> du navigateur, car le serveur d'images n'a pas de CORS.
+      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (context, error, stackTrace) => remplacement,
       frameBuilder: (context, child, frame, synchrone) {
         if (synchrone) {

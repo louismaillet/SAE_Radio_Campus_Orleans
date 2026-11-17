@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+
+import '../supabase_config.dart';
 
 // Sites officiels (slug de l'API -> site). On ne prend pas le websiteUrl de l'API
 // car il contient parfois des Facebook/Instagram.
@@ -198,8 +201,17 @@ class RadioRepository {
 
   // Appelle l'API et renvoie le JSON décodé.
   static Future<Map<String, dynamic>> _get(String path, [Map<String, String>? params]) async {
-    final url = Uri.https(_host, '/api$path', params);
-    final reponse = await http.get(url, headers: {'Accept': 'application/ld+json'});
+    // Sur le web, l'API bloque les navigateurs (CORS) : on passe par la fonction Supabase
+    // "proxy-radiocampus". Pas d'en-tête personnalisé ici, pour éviter la requête préliminaire.
+    final http.Response reponse;
+    if (kIsWeb) {
+      final url = Uri.parse('$supabaseUrl/functions/v1/proxy-radiocampus')
+          .replace(queryParameters: {'chemin': '/api$path', ...?params});
+      reponse = await http.get(url);
+    } else {
+      final url = Uri.https(_host, '/api$path', params);
+      reponse = await http.get(url, headers: {'Accept': 'application/ld+json'});
+    }
     // utf8.decode sur les octets pour bien garder les accents.
     return jsonDecode(utf8.decode(reponse.bodyBytes)) as Map<String, dynamic>;
   }

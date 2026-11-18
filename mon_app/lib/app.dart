@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'models/campus_radio.dart';
 import 'pages/home_page.dart';
 import 'player/player_controller.dart';
 import 'player/player_notification.dart';
@@ -11,7 +12,10 @@ import 'theme/theme_controller.dart';
 import 'widgets/bottom_player.dart';
 
 class RadioCampusApp extends StatefulWidget {
-  const RadioCampusApp({super.key});
+  const RadioCampusApp({this.chargerRadios = RadioRepository.getRadios, super.key});
+
+  // Remplaçable dans les tests pour ne pas appeler l'API.
+  final Future<List<CampusRadio>> Function() chargerRadios;
 
   @override
   State<RadioCampusApp> createState() => _RadioCampusAppState();
@@ -59,7 +63,7 @@ class _RadioCampusAppState extends State<RadioCampusApp> {
             darkTheme: AppTheme.dark(),
             themeMode: mode,
             builder: (context, child) => _Cadre(navigatorKey: _navigatorKey, child: child!),
-            home: const HomePage(),
+            home: HomePage(chargerRadios: widget.chargerRadios),
           ),
         ),
       ),

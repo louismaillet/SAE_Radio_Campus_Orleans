@@ -98,4 +98,22 @@ void main() {
     await RadioChoisie.enregistrer('radio-campus-tours');
     expect(RadioChoisie.courante.value, 'radio-campus-tours');
   });
+
+  test('choix fait : pas encore au premier lancement', () async {
+    await RadioChoisie.lire();
+    expect(RadioChoisie.choixFait.value, isFalse);
+  });
+
+  test('choix fait : radio par défaut définie (Explorer ou carte)', () async {
+    await RadioChoisie.enregistrer('radio-campus-orleans');
+    expect(RadioChoisie.choixFait.value, isTrue);
+  });
+
+  test('choix fait : carte utilisée sans radio par défaut, mémorisé', () async {
+    await RadioChoisie.terminerChoix();
+    RadioChoisie.choixFait.value = false;
+    await RadioChoisie.lire();
+    expect(RadioChoisie.choixFait.value, isTrue);
+    expect(RadioChoisie.courante.value, isNull);
+  });
 }

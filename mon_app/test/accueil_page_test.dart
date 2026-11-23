@@ -74,7 +74,7 @@ void main() {
     await tester.tap(find.widgetWithText(ListTile, 'Tours'));
     await tester.pump();
     expect(find.text('Radio Campus Tours'), findsOneWidget);
-    expect(find.text('Écouter'), findsOneWidget);
+    expect(find.text('Radio par défaut'), findsOneWidget);
   });
 
   testWidgets('position trouvée affiche la ville la plus proche', (tester) async {
@@ -84,7 +84,7 @@ void main() {
     await tester.pump();
     expect(find.text('Radio Campus Orléans'), findsOneWidget);
     expect(find.textContaining('km'), findsOneWidget);
-    expect(find.text('Écouter'), findsOneWidget);
+    expect(find.text('Radio par défaut'), findsOneWidget);
   });
 
   testWidgets('position refusée affiche le message et garde le bouton', (tester) async {
@@ -123,7 +123,7 @@ void main() {
     await tester.tap(find.widgetWithText(ActionChip, 'La Réunion'));
     await tester.pump();
     expect(find.text('Radio Campus Saint-Denis - La Réunion'), findsOneWidget);
-    expect(find.text('Écouter'), findsOneWidget);
+    expect(find.text('Radio par défaut'), findsOneWidget);
   });
 
   testWidgets('radios en erreur affiche Réessayer', (tester) async {

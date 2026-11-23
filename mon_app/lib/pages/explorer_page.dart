@@ -29,26 +29,12 @@ class ExplorerPage extends StatefulWidget {
 class _ExplorerPageState extends State<ExplorerPage> {
   // Logos ajoutés par les gérants (slug -> image).
   Map<String, Uint8List> _logos = {};
-  String? _radioParDefaut;
   String _recherche = '';
 
   @override
   void initState() {
     super.initState();
     _chargerLogos();
-    // Suit la radio par défaut, même quand elle est choisie depuis l'onglet Accueil.
-    RadioChoisie.courante.addListener(_majRadioParDefaut);
-    RadioChoisie.lire();
-  }
-
-  @override
-  void dispose() {
-    RadioChoisie.courante.removeListener(_majRadioParDefaut);
-    super.dispose();
-  }
-
-  void _majRadioParDefaut() {
-    if (mounted) setState(() => _radioParDefaut = RadioChoisie.courante.value);
   }
 
   // Tirer la liste vers le bas : on recharge les radios et les logos.
@@ -70,10 +56,10 @@ class _ExplorerPageState extends State<ExplorerPage> {
   }
 
   // L'utilisateur choisit une radio : on propose d'en faire sa radio par défaut
-  // (sauf si c'est déjà le cas), puis on l'ouvre.
+  // (sauf si le choix a déjà été fait, ici ou sur la carte), puis on l'ouvre.
   Future<void> _choisirRadio(CampusRadio radio) async {
     FocusScope.of(context).unfocus(); // ferme le clavier de la recherche
-    if (radio.id == _radioParDefaut) {
+    if (RadioChoisie.choixFait.value) {
       _openRadio(radio);
       return;
     }

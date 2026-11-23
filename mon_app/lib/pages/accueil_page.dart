@@ -92,10 +92,17 @@ class _AccueilPageState extends State<AccueilPage> {
     }
   }
 
-  Future<void> _ecouter(CampusRadio radio) async {
-    await RadioChoisie.enregistrer(radio.id);
-    if (!mounted) return;
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)));
+  // Une fois le choix fait (radio par défaut ou non), la carte ne sert plus :
+  // la page de la radio s'ouvre, et le retour mène à la mosaïque Explorer.
+  Future<void> _ouvrir(CampusRadio radio, {required bool parDefaut}) async {
+    // Le navigateur est pris avant : l'onglet Accueil disparaît dès que le choix est fait.
+    final navigateur = Navigator.of(context);
+    if (parDefaut) {
+      await RadioChoisie.enregistrer(radio.id);
+    } else {
+      await RadioChoisie.terminerChoix();
+    }
+    navigateur.push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)));
   }
 
   @override
@@ -359,23 +366,38 @@ class _AccueilPageState extends State<AccueilPage> {
                 ),
               ],
             ),
-            for (final radio in ville.radios)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(radio.name, style: textes.bodyLarge!.copyWith(color: scheme.onSecondaryContainer)),
-                    ),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
-                      onPressed: () => _ecouter(radio),
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Écouter'),
-                    ),
-                  ],
-                ),
+            for (final radio in ville.radios) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                radio.name,
+                style: textes.bodyLarge!.copyWith(fontWeight: FontWeight.w600, color: scheme.onSecondaryContainer),
               ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'En faire ta radio par défaut ? Elle s\'ouvrira directement au prochain lancement.',
+                style: textes.bodyMedium!.copyWith(color: scheme.onSecondaryContainer),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                      onPressed: () => _ouvrir(radio, parDefaut: false),
+                      child: const Text('Non'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                      onPressed: () => _ouvrir(radio, parDefaut: true),
+                      child: const Text('Radio par défaut'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

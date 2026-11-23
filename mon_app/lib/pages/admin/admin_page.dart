@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import '../../models/campus_radio.dart';
+import '../../models/page_module.dart';
 import '../../models/radio_settings.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/radio_palette.dart';
@@ -11,6 +13,7 @@ import '../../widgets/notification_form.dart';
 import '../login_page.dart';
 import '../radio_details_page.dart';
 import 'admin_sections.dart';
+import 'ma_page_section.dart';
 
 // Espace gérant : connexion à l'ouverture (le serveur retrouve la radio du gérant), puis tableau de bord.
 class AdminPage extends StatefulWidget {
@@ -86,6 +89,7 @@ class _AdminPageState extends State<AdminPage> {
 enum AdminSection {
   dashboard('Tableau de bord', 'Accueil', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
   apparence('Apparence', 'Apparence', Icons.palette_outlined, Icons.palette_rounded),
+  page('Ma page', 'Ma page', Icons.view_agenda_outlined, Icons.view_agenda_rounded),
   flux('Flux audio', 'Flux', Icons.sensors_outlined, Icons.sensors_rounded),
   notifications('Notifications', 'Notifs', Icons.notifications_outlined, Icons.notifications_rounded);
 
@@ -160,6 +164,7 @@ class _AdminShellState extends State<AdminShell> {
       logo: _brouillon.logo,
       couleur: _brouillon.couleur,
       streamUrl: _brouillon.streamUrl,
+      modules: _brouillon.modules,
     );
   }
 
@@ -173,8 +178,13 @@ class _AdminShellState extends State<AdminShell> {
         (avant.siteUrl ?? '') != site ||
         !identical(avant.logo, _brouillon.logo) ||
         avant.couleur != _brouillon.couleur ||
-        avant.streamUrl != _brouillon.streamUrl;
+        avant.streamUrl != _brouillon.streamUrl ||
+        _texteModules(avant.modules) != _texteModules(_brouillon.modules);
   }
+
+  // Pour comparer deux listes de modules (null = page par défaut).
+  static String? _texteModules(List<PageModule>? modules) =>
+      modules == null ? null : jsonEncode([for (final m in modules) m.toJson()]);
 
   // Une section a changé un réglage : on met à jour le brouillon et l'aperçu.
   void _modifier(AdminDraft brouillon) {
@@ -345,6 +355,12 @@ class _AdminShellState extends State<AdminShell> {
         onChanged: _modifier,
         onMessage: _message,
       ),
+      AdminSection.page => MaPageSection(
+        radio: widget.radio,
+        details: _detailsFuture,
+        brouillon: _brouillon,
+        onChanged: _modifier,
+      ),
       AdminSection.flux => StreamSection(radio: widget.radio, brouillon: _brouillon, onChanged: _modifier),
       AdminSection.notifications => ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -361,19 +377,21 @@ class _AdminShellState extends State<AdminShell> {
 
 // Réglages en cours de modification (le texte du site est dans un TextEditingController).
 class AdminDraft {
-  const AdminDraft({required this.afficherSite, this.logo, this.couleur, this.streamUrl});
+  const AdminDraft({required this.afficherSite, this.logo, this.couleur, this.streamUrl, this.modules});
 
   factory AdminDraft.depuis(RadioSettings reglages) => AdminDraft(
     afficherSite: reglages.afficherSite,
     logo: reglages.logo,
     couleur: reglages.couleur,
     streamUrl: reglages.streamUrl,
+    modules: reglages.modules,
   );
 
   final bool afficherSite;
   final Uint8List? logo;
   final Color? couleur;
   final String? streamUrl;
+  final List<PageModule>? modules; // null = page par défaut
 
   // copyWith qui permet aussi de remettre une valeur à null.
   AdminDraft copyWith({
@@ -381,10 +399,12 @@ class AdminDraft {
     Uint8List? Function()? logo,
     Color? Function()? couleur,
     String? Function()? streamUrl,
+    List<PageModule>? Function()? modules,
   }) => AdminDraft(
     afficherSite: afficherSite ?? this.afficherSite,
     logo: logo != null ? logo() : this.logo,
     couleur: couleur != null ? couleur() : this.couleur,
     streamUrl: streamUrl != null ? streamUrl() : this.streamUrl,
+    modules: modules != null ? modules() : this.modules,
   );
 }

@@ -49,6 +49,7 @@ class CampusRadio {
     this.city,
     this.excerpt,
     this.categoryColor,
+    this.slogan,
   });
 
   final String id; // le "slug" de l'API
@@ -59,6 +60,9 @@ class CampusRadio {
   final String? city;
   final String? excerpt; // courte présentation
   final String? categoryColor; // couleur de la catégorie, ex. "#2154ff"
+  // Texte du lecteur officiel (playerMetadata.title). L'API ne donne pas le morceau en cours :
+  // ni endpoint, ni métadonnées ICY dans les flux (testé sur les 35 radios en novembre 2026).
+  final String? slogan;
 
   factory CampusRadio.fromJson(Map<String, dynamic> json) {
     final slug = json['slug'] as String;
@@ -71,6 +75,7 @@ class CampusRadio {
       city: json['city'] as String?,
       excerpt: json['contentExcerpt'] as String?,
       categoryColor: (json['category'] as Map?)?['color'] as String?,
+      slogan: (json['playerMetadata'] as Map?)?['title'] as String?,
     );
   }
 }

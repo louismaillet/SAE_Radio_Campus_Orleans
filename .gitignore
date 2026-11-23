@@ -103,3 +103,7 @@ Thumbs.db
 
 mon_app/pubspec.lock
 mon_app/GeneratedPluginRegistrant.swift
+LANCER_APP.txt
+
+# Fichiers temporaires de la CLI Supabase
+**/supabase/.temp/

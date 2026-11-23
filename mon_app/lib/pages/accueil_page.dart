@@ -92,17 +92,14 @@ class _AccueilPageState extends State<AccueilPage> {
     }
   }
 
-  // Une fois le choix fait (radio par défaut ou non), la carte ne sert plus :
-  // la page de la radio s'ouvre, et le retour mène à la mosaïque Explorer.
+  // « Non » : on écoute la radio, le retour ramène à la carte.
+  // « Radio par défaut » : la carte ne sert plus, l'onglet Accueil devient la page de la radio.
   Future<void> _ouvrir(CampusRadio radio, {required bool parDefaut}) async {
-    // Le navigateur est pris avant : l'onglet Accueil disparaît dès que le choix est fait.
-    final navigateur = Navigator.of(context);
     if (parDefaut) {
       await RadioChoisie.enregistrer(radio.id);
-    } else {
-      await RadioChoisie.terminerChoix();
+      return;
     }
-    navigateur.push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)));
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => RadioDetailsPage(radio: radio)));
   }
 
   @override

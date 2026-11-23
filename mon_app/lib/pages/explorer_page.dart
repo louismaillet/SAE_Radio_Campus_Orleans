@@ -56,10 +56,11 @@ class _ExplorerPageState extends State<ExplorerPage> {
   }
 
   // L'utilisateur choisit une radio : on propose d'en faire sa radio par défaut
-  // (sauf si le choix a déjà été fait, ici ou sur la carte), puis on l'ouvre.
+  // (sauf si le choix a déjà été fait, ici ou sur la carte). Par défaut : elle
+  // s'affiche dans l'onglet Accueil ; sinon on l'ouvre par-dessus Explorer.
   Future<void> _choisirRadio(CampusRadio radio) async {
     FocusScope.of(context).unfocus(); // ferme le clavier de la recherche
-    if (RadioChoisie.choixFait.value) {
+    if (RadioChoisie.courante.value != null) {
       _openRadio(radio);
       return;
     }
@@ -74,7 +75,9 @@ class _ExplorerPageState extends State<ExplorerPage> {
       return; // feuille fermée sans choisir
     }
     if (choix == _ChoixRadio.parDefaut) {
+      // L'écran principal bascule sur l'onglet Accueil, qui affiche cette radio.
       await RadioChoisie.enregistrer(radio.id);
+      return;
     }
     if (mounted) {
       _openRadio(radio);

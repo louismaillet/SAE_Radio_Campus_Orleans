@@ -14,11 +14,23 @@ class ORMModel(BaseModel):
 class RadioOut(ORMModel):
     id: int
     created_at: datetime
-    site: bool
     slug: str
+    # Catalogue
+    position: int | None
+    name: str
+    city: str | None
+    excerpt: str | None
+    slogan: str | None
+    category_color: str | None
+    image_url: str | None
+    live_url: str | None
+    website_url: str | None
+    # Réglages du gérant
+    site: bool
     url: str | None
     color: str | None
     logo_url: str | None
+    stream_url: str | None
 
 
 class RadioUpdate(BaseModel):
@@ -28,6 +40,7 @@ class RadioUpdate(BaseModel):
     site: bool | None = None
     url: HttpUrl | None = None
     color: HexColor | None = None
+    stream_url: HttpUrl | None = None
 
 
 # ---------- Utilisateurs / Auth ----------
@@ -43,6 +56,7 @@ class UserOut(ORMModel):
     name: str
     is_admin: bool
     radio_id: int | None
+    radio_slug: str | None
 
 
 class Token(BaseModel):

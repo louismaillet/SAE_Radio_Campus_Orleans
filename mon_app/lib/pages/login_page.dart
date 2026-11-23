@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/api.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass.dart';
 
-// Page de connexion du gérant. Le serveur retrouve sa radio : la page se ferme avec un GerantConnecte (radio, nom, mot de passe).
-// Gérant connecté : sa radio, plus son nom et son mot de passe, que le serveur
-// revérifie quand il envoie une notification.
+// Page de connexion du gérant, via notre API (POST /auth/login puis GET /auth/me).
+// La page se ferme avec un GerantConnecte : sa radio et son jeton de connexion.
 class GerantConnecte {
   const GerantConnecte({
     required this.slug,
+    required this.jeton,
     required this.utilisateur,
     required this.motDePasse,
   });
 
   final String slug; // la radio qu'il gère
+  final String jeton; // à envoyer dans "Authorization: Bearer ..." (valable 7 jours)
+  // Encore utilisés par l'envoi de notifications (fonction Supabase), qui revérifie
+  // le compte. À retirer quand les notifications passeront par notre API.
   final String utilisateur;
   final String motDePasse;
 }
@@ -47,29 +50,30 @@ class _LoginPageState extends State<LoginPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    String? slug;
+    final utilisateur = _utilisateurController.text.trim();
+    final motDePasse = _motDePasseController.text;
+    final String jeton;
+    final Map<String, dynamic> compte;
     try {
-      // Le serveur vérifie utilisateur + mot de passe et renvoie la radio du gérant (null si faux).
-      final reponse = await Supabase.instance.client.rpc('radio_du_gerant', params: {
-        'p_utilisateur': _utilisateurController.text.trim(),
-        'p_mot_de_passe': _motDePasseController.text,
+      // Standard OAuth2 : formulaire avec "username" et "password".
+      final connexion = await Api.postFormulaire('/auth/login', {
+        'username': utilisateur,
+        'password': motDePasse,
       });
-      slug = reponse as String?;
-    } catch (_) {
-      _message('Connexion impossible, vérifie ta connexion internet.');
+      jeton = connexion['access_token'] as String;
+      compte = await Api.get('/auth/me', jeton: jeton) as Map<String, dynamic>;
+    } on ApiException catch (erreur) {
+      _message(erreur.statusCode == 401 ? 'Identifiants incorrects.' : erreur.message);
       return;
     }
-    if (slug == null) {
-      _message('Identifiants incorrects.');
+    final slug = compte['radio_slug'] as String?;
+    if (compte['is_admin'] != true || slug == null) {
+      _message("Ce compte ne gère aucune radio.");
       return;
     }
     if (mounted) {
       Navigator.of(context).pop(
-        GerantConnecte(
-          slug: slug,
-          utilisateur: _utilisateurController.text.trim(),
-          motDePasse: _motDePasseController.text,
-        ),
+        GerantConnecte(slug: slug, jeton: jeton, utilisateur: utilisateur, motDePasse: motDePasse),
       );
     }
   }

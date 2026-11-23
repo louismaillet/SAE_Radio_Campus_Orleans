@@ -21,7 +21,14 @@ BigId = BigInteger().with_variant(Integer, "sqlite")
 
 
 class Radio(Base):
-    """Une radio campus. Reprend la table Supabase `Radio`."""
+    """Une radio campus : la liste des radios de l'app vient de cette table.
+
+    Deux sortes de colonnes :
+    - le catalogue (nom, ville, flux d'origine...) : rempli par `python -m app.catalogue`
+      depuis l'API Radio Campus, jamais modifié depuis l'app ;
+    - les réglages du gérant (site, url, color, logo_url, stream_url) : modifiés
+      par le gérant de la radio (PATCH /radios/{slug}), prioritaires sur le catalogue.
+    """
 
     __tablename__ = "radios"
 
@@ -29,15 +36,37 @@ class Radio(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+
+    # --- Catalogue ---
+    # Rang dans la liste de l'app (ordre de l'API Radio Campus) ; null = en fin de liste
+    position: Mapped[int | None] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(String(200), server_default="", default="")
+    city: Mapped[str | None] = mapped_column(String(100))
+    # Courte présentation (texte brut)
+    excerpt: Mapped[str | None] = mapped_column(Text)
+    # Phrase du lecteur officiel, ex. "Radio Campus Orléans - 88.3 FM"
+    slogan: Mapped[str | None] = mapped_column(String(500))
+    # Couleur de la catégorie de la radio, ex. "#2154ff"
+    category_color: Mapped[str | None] = mapped_column(String(20))
+    # Logo d'origine (adresse externe), remplacé par logo_url si le gérant en envoie un
+    image_url: Mapped[str | None] = mapped_column(String(500))
+    # Flux du direct d'origine, remplacé par stream_url si le gérant en choisit un
+    live_url: Mapped[str | None] = mapped_column(String(500))
+    # Site officiel (null = pas de site : l'app affiche sa version appli)
+    website_url: Mapped[str | None] = mapped_column(String(500))
+
+    # --- Réglages du gérant ---
     # true = l'app affiche le site web de la radio (url), false = la version appli
     site: Mapped[bool] = mapped_column(Boolean, server_default=false(), default=False)
-    slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    # Adresse du site web de la radio
+    # Adresse du site web choisie par le gérant (null = website_url)
     url: Mapped[str | None] = mapped_column(String(500))
     # Couleur de la page de la radio, format "#RRGGBB" (null = couleur par défaut)
     color: Mapped[str | None] = mapped_column(String(7))
     # Logo de la radio, ex. "/media/logos/<uuid>.webp" (null = logo par défaut de l'app)
     logo_url: Mapped[str | None] = mapped_column(String(500))
+    # Flux du direct choisi par le gérant (null = live_url)
+    stream_url: Mapped[str | None] = mapped_column(String(500))
 
     users: Mapped[list["User"]] = relationship(back_populates="radio")
 
@@ -61,6 +90,10 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True, index=True)
 
     radio: Mapped[Radio | None] = relationship(back_populates="users")
+
+    @property
+    def radio_slug(self) -> str | None:
+        return self.radio.slug if self.radio else None
     posts: Mapped[list["Post"]] = relationship(
         back_populates="author", cascade="all, delete-orphan"
     )

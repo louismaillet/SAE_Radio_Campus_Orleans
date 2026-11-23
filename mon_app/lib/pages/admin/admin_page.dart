@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/campus_radio.dart';
 import '../../models/radio_settings.dart';
+import '../../services/api.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/radio_palette.dart';
 import '../../widgets/images.dart';
@@ -205,7 +206,14 @@ class _AdminShellState extends State<AdminShell> {
       _message("Indique l'adresse de ton site web.");
       return;
     }
-    await RadioSettingsRepository.save(reglages);
+    try {
+      await RadioSettingsRepository.save(reglages, ancien: _enregistres!, jeton: widget.gerant.jeton);
+    } on ApiException catch (erreur) {
+      _message(
+        erreur.sessionExpiree ? 'Session expirée : reconnecte-toi.' : "Échec de l'enregistrement : ${erreur.message}",
+      );
+      return;
+    }
     if (mounted) {
       setState(() => _enregistres = reglages);
       _message('Réglages enregistrés.');

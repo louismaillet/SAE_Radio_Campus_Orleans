@@ -44,7 +44,13 @@ def ensure_radio_admin(user: User, radio: Radio) -> None:
 
 @router.get("", response_model=list[RadioOut])
 def list_radios(db: Annotated[Session, Depends(get_db)]):
-    return db.scalars(select(Radio).order_by(Radio.slug)).all()
+    """Toutes les radios, dans l'ordre de la colonne `position` (celui de l'API
+    Radio Campus), puis par nom : c'est la liste affichée par l'app."""
+    return db.scalars(
+        select(Radio).order_by(
+            Radio.position.is_(None), Radio.position, func.lower(Radio.name), Radio.slug
+        )
+    ).all()
 
 
 @router.get("/{slug}", response_model=RadioOut)

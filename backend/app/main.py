@@ -8,7 +8,7 @@ from app import models  # noqa: F401  (enregistre les tables dans Base.metadata)
 from app.config import settings
 from app.database import Base, engine
 from app.push import init_firebase
-from app.routers import auth, devices, posts, radios
+from app.routers import auth, devices, posts, proxy, radios
 
 
 @asynccontextmanager
@@ -46,6 +46,7 @@ app.include_router(auth.router)
 app.include_router(radios.router)
 app.include_router(posts.router)
 app.include_router(devices.router)
+app.include_router(proxy.router)
 
 
 @app.get("/health", tags=["system"])

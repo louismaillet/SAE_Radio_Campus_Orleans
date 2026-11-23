@@ -3,42 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
-import '../supabase_config.dart';
+import '../services/api.dart';
 
-// Sites officiels (slug de l'API -> site). On ne prend pas le websiteUrl de l'API
-// car il contient parfois des Facebook/Instagram.
-// Une radio qui n'est pas dans cette liste est considérée comme "sans site" :
-// on affiche alors sa description, ses podcasts et les actualités de l'API.
-const Map<String, String> _sitesOfficiels = {
-  'radio-campus-47': 'https://radiocampus47.fr/',
-  'radio-campus-amiens-amiens': 'http://www.radiocampusamiens.fr/',
-  'radio-campus-angers': 'https://www.radiocampusangers.com/',
-  'radio-campus-avignon': 'https://avignon.radiocampus.fr/',
-  'radio-campus-besancon': 'https://campusbesancon.fr/',
-  'radio-campus-bordeaux': 'https://www.radiocampusbordeaux.fr/',
-  'programmationatradio-u-org': 'https://www.radio-u.org/',
-  'radio-phenix': 'https://phenix.fm/',
-  'radiom-campus-castres': 'https://www.radiom.fr/',
-  'radio-campus-clermont-ferrand': 'https://campus-clermont.net/',
-  'radio-dijon-campus': 'https://radiodijoncampus.com/',
-  'radio-campus-grenoble': 'https://campusgrenoble.org/',
-  'radio-campus-lille': 'https://www.campuslille.com/',
-  'radio-campus-tours': 'https://www.radiocampustours.com/',
-  'campus-fm-toulouse': 'https://www.campusfm.net/',
-  'radio-en-construction': 'https://www.radioenconstruction.com/',
-  'c-lab-campus-rennes': 'https://www.c-lab.fr/',
-  'radio-pulsar-poitiers': 'https://www.radio-pulsar.org/',
-  'radio-campus-pau': 'https://radiocampuspau.fr/',
-  'www-radiocampusparis-org': 'https://www.radiocampusparis.org/',
-  'radio-campus-orleans': 'https://orleans.radiocampus.org/',
-  'radio-mne-mulhouse': 'https://www.radiomne.com/',
-  'radio-campus-montpellier': 'https://www.radiocampusmontpellier.fr/',
-  'radio-grenouille-marseille': 'https://www.radiogrenouille.com/',
-  'radio-brume-lyon': 'https://www.radiobrume.fr/',
-  'radio-campus-lorraine-nancy-metz': 'https://www.radiocampuslorraine.com/',
-};
-
-// Radio de la liste (/radios).
+// Radio de la liste, lue dans notre API (GET /radios, table "radios").
 class CampusRadio {
   const CampusRadio({
     required this.id,
@@ -52,7 +19,7 @@ class CampusRadio {
     this.slogan,
   });
 
-  final String id; // le "slug" de l'API
+  final String id; // le "slug" (le même que dans l'API Radio Campus)
   final String name;
   final String? logoUrl;
   final String? streamUrl;
@@ -64,18 +31,19 @@ class CampusRadio {
   // ni endpoint, ni métadonnées ICY dans les flux (testé sur les 35 radios en novembre 2026).
   final String? slogan;
 
-  factory CampusRadio.fromJson(Map<String, dynamic> json) {
+  factory CampusRadio.fromApiJson(Map<String, dynamic> json) {
     final slug = json['slug'] as String;
+    final nom = json['name'] as String?;
     return CampusRadio(
       id: slug,
-      name: json['title'] as String,
-      logoUrl: _imageUrl(json['imageUrl']),
-      streamUrl: json['mediaUrl'] as String?,
-      websiteUrl: _sitesOfficiels[slug],
+      name: (nom == null || nom.isEmpty) ? slug : nom,
+      logoUrl: json['image_url'] as String?,
+      streamUrl: json['live_url'] as String?,
+      websiteUrl: json['website_url'] as String?,
       city: json['city'] as String?,
-      excerpt: json['contentExcerpt'] as String?,
-      categoryColor: (json['category'] as Map?)?['color'] as String?,
-      slogan: (json['playerMetadata'] as Map?)?['title'] as String?,
+      excerpt: json['excerpt'] as String?,
+      categoryColor: json['category_color'] as String?,
+      slogan: json['slogan'] as String?,
     );
   }
 }
@@ -206,12 +174,11 @@ class RadioRepository {
 
   // Appelle l'API et renvoie le JSON décodé.
   static Future<Map<String, dynamic>> _get(String path, [Map<String, String>? params]) async {
-    // Sur le web, l'API bloque les navigateurs (CORS) : on passe par la fonction Supabase
-    // "proxy-radiocampus". Pas d'en-tête personnalisé ici, pour éviter la requête préliminaire.
+    // Sur le web, l'API bloque les navigateurs (CORS) : on passe par le relais de notre API
+    // (GET /proxy/radiocampus). Pas d'en-tête personnalisé ici, pour éviter la requête préliminaire.
     final http.Response reponse;
     if (kIsWeb) {
-      final url = Uri.parse('$supabaseUrl/functions/v1/proxy-radiocampus')
-          .replace(queryParameters: {'chemin': '/api$path', ...?params});
+      final url = Api.uri('/proxy/radiocampus', {'chemin': '/api$path', ...?params});
       reponse = await http.get(url);
     } else {
       final url = Uri.https(_host, '/api$path', params);
@@ -221,13 +188,11 @@ class RadioRepository {
     return jsonDecode(utf8.decode(reponse.bodyBytes)) as Map<String, dynamic>;
   }
 
+  // La liste des radios vient de notre base (remplie par `python -m app.catalogue`).
+  // Le détail, les podcasts et les actualités viennent toujours de l'API Radio Campus.
   static Future<List<CampusRadio>> getRadios() async {
-    final data = await _get('/radios');
-    final radios = <CampusRadio>[];
-    for (final item in data['member'] as List<dynamic>) {
-      radios.add(CampusRadio.fromJson(item as Map<String, dynamic>));
-    }
-    return radios;
+    final data = await Api.get('/radios') as List<dynamic>;
+    return [for (final item in data) CampusRadio.fromApiJson(item as Map<String, dynamic>)];
   }
 
   static Future<RadioDetails> getDetails(String radioId) async {

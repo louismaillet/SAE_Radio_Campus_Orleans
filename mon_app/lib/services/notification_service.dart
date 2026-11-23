@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../config.dart';
@@ -13,7 +14,8 @@ import '../config.dart';
 // L'envoi est fait par la fonction Supabase "envoyer-notification".
 class NotificationService {
   // Les notifications ne marchent que sur Android, et seulement si Firebase est configuré.
-  static bool get actif => Platform.isAndroid && firebaseOptions.apiKey.isNotEmpty;
+  // kIsWeb d'abord : Platform plante sur le web.
+  static bool get actif => !kIsWeb && Platform.isAndroid && firebaseOptions.apiKey.isNotEmpty;
 
   // Sert à afficher un bandeau quand une notification arrive avec l'app ouverte.
   static final GlobalKey<ScaffoldMessengerState> messengerKey =

@@ -125,6 +125,17 @@ class _RadioDetailsPageState extends State<RadioDetailsPage> {
   }
 }
 
+// Bouton retour, absent quand la page est l'onglet Accueil (il n'y a rien derrière).
+class _Retour extends StatelessWidget {
+  const _Retour();
+
+  @override
+  Widget build(BuildContext context) {
+    final peutRevenir = ModalRoute.of(context)?.canPop ?? false;
+    return peutRevenir ? const BackButton() : const SizedBox(width: 12, height: 48);
+  }
+}
+
 class _Erreur extends StatelessWidget {
   const _Erreur({required this.onRetry});
 
@@ -135,7 +146,7 @@ class _Erreur extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          const Align(alignment: Alignment.centerLeft, child: BackButton()),
+          const Align(alignment: Alignment.centerLeft, child: _Retour()),
           Expanded(
             child: Center(
               child: Padding(
@@ -259,7 +270,7 @@ class _WebsiteViewState extends State<_WebsiteView> {
             padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
             child: Row(
               children: [
-                const BackButton(),
+                const _Retour(),
                 Hero(
                   tag: 'logo-${widget.radio.id}',
                   child: RadioLogo(url: widget.radio.logoUrl, bytes: widget.donnees.reglages.logo, size: 40),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mon_app/app.dart';
 import 'package:mon_app/models/campus_radio.dart';
 import 'package:mon_app/models/radio_settings.dart';
+import 'package:mon_app/services/radio_choisie.dart';
 import 'package:mon_app/theme/radio_palette.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -72,11 +73,29 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const RadioCampusApp());
+    await tester.pumpWidget(RadioCampusApp(chargerRadios: () async => [_radio]));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.byTooltip('Espace gérant'), findsOneWidget);
+    // Deux onglets : Accueil (choix de la ville) et Explorer (toutes les radios).
+    expect(find.text('Accueil'), findsOneWidget);
+    expect(find.text('Explorer'), findsOneWidget);
+
+    await tester.tap(find.text('Explorer'));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byTooltip('Espace gérant'), findsWidgets);
     expect(find.text('Les radios du réseau'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Radio Test'), findsOneWidget);
+  });
+
+  test('RadioChoisie mémorise la radio choisie', () async {
+    expect(await RadioChoisie.lire(), isNull);
+    await RadioChoisie.enregistrer('radio-campus-orleans');
+    expect(await RadioChoisie.lire(), 'radio-campus-orleans');
+  });
+
+  test('RadioChoisie prévient les onglets quand la radio change', () async {
+    await RadioChoisie.enregistrer('radio-campus-tours');
+    expect(RadioChoisie.courante.value, 'radio-campus-tours');
   });
 }

@@ -98,5 +98,8 @@ Thumbs.db
 !README.md
 !api-radiocampus.md
 
+!TODO_notifications.md
+!backend.md
+
 mon_app/pubspec.lock
 mon_app/GeneratedPluginRegistrant.swift

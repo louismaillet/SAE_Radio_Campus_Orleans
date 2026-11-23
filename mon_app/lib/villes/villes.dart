@@ -9,6 +9,14 @@ class VilleRadio {
   final String nom; // valeur "city" de l'API
   final LatLng? position; // null si la ville n'est pas dans coordonneesVilles
   final List<CampusRadio> radios;
+
+  // Une ville est identifiée par son nom : la sélection reste valable
+  // quand la liste est recalculée (nouvel affichage, rechargement).
+  @override
+  bool operator ==(Object other) => other is VilleRadio && other.nom == nom;
+
+  @override
+  int get hashCode => nom.hashCode;
 }
 
 // L'API ne donne pas de coordonnées : centre de chaque ville, clé = "city" exact de l'API.
@@ -69,13 +77,14 @@ const _accents = {
   'ÿ': 'y', 'œ': 'oe', 'æ': 'ae',
 };
 
-// Minuscules, sans accents, espaces en trop retirés.
+// Minuscules, sans accents ; traits d'union, apostrophes et espaces multiples
+// deviennent un seul espace (« clermont ferrand » = « Clermont-Ferrand »).
 String normaliser(String s) {
   final buffer = StringBuffer();
-  for (final c in s.toLowerCase().trim().split('')) {
+  for (final c in s.toLowerCase().split('')) {
     buffer.write(_accents[c] ?? c);
   }
-  return buffer.toString();
+  return buffer.toString().replaceAll(RegExp(r"[-'’\s]+"), ' ').trim();
 }
 
 // Villes dont le nom contient le texte ; celles qui commencent par le texte d'abord.
@@ -109,3 +118,6 @@ List<VilleRadio> rechercherVilles(List<VilleRadio> villes, String texte) {
   }
   return meilleure;
 }
+
+// Villes hors de la vue de départ (France métropolitaine) : proposées en raccourci.
+const Set<String> villesLointaines = {'Bruxelles', 'Sherbrooke', 'Saint-Denis - La Réunion'};

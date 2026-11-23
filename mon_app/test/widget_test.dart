@@ -93,4 +93,9 @@ void main() {
     await RadioChoisie.enregistrer('radio-campus-orleans');
     expect(await RadioChoisie.lire(), 'radio-campus-orleans');
   });
+
+  test('RadioChoisie prévient les onglets quand la radio change', () async {
+    await RadioChoisie.enregistrer('radio-campus-tours');
+    expect(RadioChoisie.courante.value, 'radio-campus-tours');
+  });
 }

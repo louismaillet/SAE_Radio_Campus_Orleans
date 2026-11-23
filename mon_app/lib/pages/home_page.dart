@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/campus_radio.dart';
 import '../services/notification_service.dart';
 import '../services/radio_choisie.dart';
+import 'accueil_page.dart';
 import 'explorer_page.dart';
 import 'radio_details_page.dart';
 
@@ -70,7 +71,7 @@ class _HomePageState extends State<HomePage> {
       body: IndexedStack(
         index: _onglet,
         children: [
-          const Placeholder(), // remplacé par AccueilPage (Task 3)
+          AccueilPage(radios: _radios, onReessayer: _rafraichir),
           ExplorerPage(radios: _radios, onRafraichir: _rafraichir),
         ],
       ),

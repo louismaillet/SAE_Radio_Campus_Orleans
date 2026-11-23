@@ -27,6 +27,13 @@ void main() {
     expect(villes.single.position, isNull);
   });
 
+  test('deux VilleRadio du même nom sont égales (la sélection survit aux reconstructions)', () {
+    final a = villesDuReseau([_radio('o', 'Orléans')]).single;
+    final b = villesDuReseau([_radio('o', 'Orléans')]).single;
+    expect(a, b);
+    expect(a.hashCode, b.hashCode);
+  });
+
   group('rechercherVilles', () {
     final villes = [_ville('Besançon'), _ville('Nancy - Metz'), _ville('Orléans'), _ville('Tours')];
 
@@ -35,6 +42,14 @@ void main() {
       expect(rechercherVilles(villes, 'BESANCON').map((v) => v.nom), ['Besançon']);
       expect(rechercherVilles(villes, 'nancy').map((v) => v.nom), ['Nancy - Metz']);
       expect(rechercherVilles(villes, '  tours ').map((v) => v.nom), ['Tours']);
+    });
+
+    test('espaces et traits d\'union sont équivalents', () {
+      final v = [_ville('Clermont-Ferrand'), _ville('Saint-Denis - La Réunion'), _ville('Nancy - Metz')];
+      expect(rechercherVilles(v, 'clermont ferrand').map((x) => x.nom), ['Clermont-Ferrand']);
+      expect(rechercherVilles(v, 'saint denis').map((x) => x.nom), ['Saint-Denis - La Réunion']);
+      expect(rechercherVilles(v, 'nancy metz').map((x) => x.nom), ['Nancy - Metz']);
+      expect(rechercherVilles(v, 'nancy-metz').map((x) => x.nom), ['Nancy - Metz']);
     });
 
     test('texte vide : aucune suggestion', () {

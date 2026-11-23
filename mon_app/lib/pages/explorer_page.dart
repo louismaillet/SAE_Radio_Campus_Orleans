@@ -36,9 +36,19 @@ class _ExplorerPageState extends State<ExplorerPage> {
   void initState() {
     super.initState();
     _chargerLogos();
-    RadioChoisie.lire().then((id) {
-      if (mounted) setState(() => _radioParDefaut = id);
-    });
+    // Suit la radio par défaut, même quand elle est choisie depuis l'onglet Accueil.
+    RadioChoisie.courante.addListener(_majRadioParDefaut);
+    RadioChoisie.lire();
+  }
+
+  @override
+  void dispose() {
+    RadioChoisie.courante.removeListener(_majRadioParDefaut);
+    super.dispose();
+  }
+
+  void _majRadioParDefaut() {
+    if (mounted) setState(() => _radioParDefaut = RadioChoisie.courante.value);
   }
 
   // Tirer la liste vers le bas : on recharge les radios et les logos.
@@ -79,7 +89,6 @@ class _ExplorerPageState extends State<ExplorerPage> {
     }
     if (choix == _ChoixRadio.parDefaut) {
       await RadioChoisie.enregistrer(radio.id);
-      if (mounted) setState(() => _radioParDefaut = radio.id);
     }
     if (mounted) {
       _openRadio(radio);

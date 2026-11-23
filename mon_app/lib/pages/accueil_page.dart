@@ -92,7 +92,7 @@ class _AccueilPageState extends State<AccueilPage> {
     }
   }
 
-  // « Non » : on écoute la radio, le retour ramène à la carte.
+  // « Juste écouter » : on écoute la radio, le retour ramène à la carte.
   // « Radio par défaut » : la carte ne sert plus, l'onglet Accueil devient la page de la radio.
   Future<void> _ouvrir(CampusRadio radio, {required bool parDefaut}) async {
     if (parDefaut) {
@@ -381,7 +381,7 @@ class _AccueilPageState extends State<AccueilPage> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                       onPressed: () => _ouvrir(radio, parDefaut: false),
-                      child: const Text('Non'),
+                      child: const Text('Juste écouter'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),

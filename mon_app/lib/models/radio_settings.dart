@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'campus_radio.dart';
+import 'page_module.dart';
 
 // Réglages choisis par le gérant d'une radio dans la page admin.
 class RadioSettings {
@@ -15,6 +16,7 @@ class RadioSettings {
     required this.logo,
     required this.couleur,
     this.streamUrl,
+    this.modules,
   });
 
   final String radioId; // le slug de la radio
@@ -23,6 +25,9 @@ class RadioSettings {
   final Uint8List? logo; // l'image choisie par le gérant (null = logo de l'API)
   final Color? couleur; // couleur secondaire (null = couleur par défaut)
   final String? streamUrl; // flux du direct choisi par le gérant (null = celui de l'API)
+  final List<PageModule>? modules; // modules de la page version appli (null = page par défaut)
+
+  List<PageModule> get modulesEffectifs => modules ?? modulesParDefaut();
 
   // Réglages d'une radio que le gérant n'a jamais modifiée :
   // site web si la radio est dans la table des sites officiels, sinon version appli.
@@ -52,6 +57,7 @@ class RadioSettings {
       'logo': logoTexte,
       'couleur': couleurNombre,
       'streamUrl': streamUrl,
+      'modules': modules?.map((m) => m.toJson()).toList(),
     };
   }
 
@@ -73,7 +79,25 @@ class RadioSettings {
       logo: logo,
       couleur: couleur,
       streamUrl: json['streamUrl'] as String?,
+      modules: _lireModules(json['modules']),
     );
+  }
+
+  // Les modules d'un type inconnu sont ignorés.
+  static List<PageModule>? _lireModules(dynamic json) {
+    if (json is! List) {
+      return null;
+    }
+    final modules = <PageModule>[];
+    for (final item in json) {
+      if (item is Map) {
+        final module = PageModule.fromJson(Map<String, dynamic>.from(item));
+        if (module != null) {
+          modules.add(module);
+        }
+      }
+    }
+    return modules;
   }
 
   // Flux du direct à lire : celui du gérant, sinon celui de l'API.

@@ -142,6 +142,8 @@ class RadioContent {
     required this.imageUrl,
     this.showSlug,
     this.showTitle,
+    this.slug,
+    this.tags = const [],
   });
 
   final RadioContentType type;
@@ -152,6 +154,8 @@ class RadioContent {
   final String? imageUrl;
   final String? showSlug; // émission du podcast
   final String? showTitle;
+  final String? slug; // slug de l'épisode ou de l'article
+  final List<String> tags; // slugs des tags (articles détaillés seulement)
 
   factory RadioContent.fromPodcastJson(Map<String, dynamic> json) {
     final emission = json['radioshow'];
@@ -164,6 +168,7 @@ class RadioContent {
       imageUrl: _imageUrl(json['imageUrl']),
       showSlug: emission is Map ? emission['slug'] as String? : null,
       showTitle: emission is Map ? emission['title'] as String? : null,
+      slug: json['slug'] as String?,
     );
   }
 
@@ -177,8 +182,59 @@ class RadioContent {
       date: _formatDate(DateTime.fromMillisecondsSinceEpoch(secondes * 1000)),
       audioUrl: null,
       imageUrl: _imageUrl(json['imageUrl']),
+      slug: json['slug'] as String?,
+      tags: _slugsTags(json['tags']),
     );
   }
+}
+
+// Le détail d'un article donne ses tags sous la forme { "member": [ { "slug": ... } ] }.
+List<String> _slugsTags(dynamic tags) {
+  if (tags is! Map || tags['member'] is! List) {
+    return const [];
+  }
+  final slugs = <String>[];
+  for (final tag in tags['member'] as List) {
+    if (tag is Map && tag['slug'] is String) {
+      slugs.add(tag['slug'] as String);
+    }
+  }
+  return slugs;
+}
+
+// Tag de l'API (/tags).
+class Tag {
+  const Tag({required this.slug, required this.nom});
+
+  final String slug;
+  final String nom;
+}
+
+// Détail d'une émission (/shows/{slug}).
+class ShowDetails {
+  const ShowDetails({required this.slug, required this.titre, this.imageUrl, this.description});
+
+  final String slug;
+  final String titre;
+  final String? imageUrl;
+  final String? description; // en HTML
+}
+
+// Articles qui ont au moins un des tags, dans l'ordre reçu, au plus [nombre].
+List<RadioContent> filtrerParTags(List<RadioContent> articles, List<String> tags, int nombre) {
+  return articles.where((a) => a.tags.any(tags.contains)).take(nombre).toList();
+}
+
+// Podcasts des émissions choisies (sélection vide = toutes les émissions de la radio).
+// Une émission qui n'est pas celle de la radio n'est jamais gardée.
+List<RadioContent> filtrerReplays(
+  List<RadioContent> podcasts, {
+  required List<String> emissionsRadio,
+  required List<String> selection,
+  required int nombre,
+}) {
+  final emissions = selection.isEmpty ? emissionsRadio : selection.where(emissionsRadio.contains).toList();
+  return podcasts.where((p) => emissions.contains(p.showSlug)).take(nombre).toList();
 }
 
 // Transforme une date en "05/03/2024".
@@ -270,28 +326,74 @@ class RadioRepository {
   }
 
   static Future<List<RadioContent>> getContent(List<String> showSlugs) async {
-    final contenus = <RadioContent>[];
+    return [...await getPodcastsRadio(showSlugs), ...await getNews()];
+  }
 
-    // Le filtre par radio de l'API ne marche pas : on prend tous les podcasts
-    // (235 au total) et on garde ceux qui viennent des émissions de la radio.
+  // Podcasts publiés des émissions de la radio, du plus récent au plus ancien.
+  static Future<List<RadioContent>> getPodcastsRadio(List<String> showSlugs) async {
+    final contenus = <RadioContent>[];
     for (final podcast in await _podcastsPublies()) {
       final emission = podcast['radioshow'];
       if (emission is Map && showSlugs.contains(emission['slug'])) {
         contenus.add(RadioContent.fromPodcastJson(podcast));
       }
     }
-
-    contenus.addAll(await getNews());
     return contenus;
   }
 
   // Les articles ne sont pas liés à une radio : ce sont les actualités du réseau.
-  static Future<List<RadioContent>> getNews() async {
-    final articles = await _get('/articles', {'itemsPerPage': '5', 'order[publishedAt]': 'desc'});
+  static Future<List<RadioContent>> getNews({int nombre = 5}) async {
+    final articles = await _get('/articles', {'itemsPerPage': '$nombre', 'order[publishedAt]': 'desc'});
     final news = <RadioContent>[];
     for (final item in articles['member'] as List<dynamic>) {
       news.add(RadioContent.fromNewsJson(item as Map<String, dynamic>));
     }
     return news;
+  }
+
+  // Les 30 derniers articles avec leurs tags. La liste de l'API ne donne pas les tags
+  // et ignore le filtre par tag : on charge le détail de chaque article.
+  // Gardé en mémoire comme les podcasts.
+  static Future<List<RadioContent>>? _articlesCache;
+
+  static Future<List<RadioContent>> getArticlesDetailles() {
+    final cache = _articlesCache;
+    if (cache != null) {
+      return cache;
+    }
+    final future = _chargerArticlesDetailles();
+    _articlesCache = future;
+    future.catchError((Object _) {
+      _articlesCache = null;
+      return <RadioContent>[];
+    });
+    return future;
+  }
+
+  static Future<List<RadioContent>> _chargerArticlesDetailles() async {
+    final liste = await _get('/articles', {'itemsPerPage': '30', 'order[publishedAt]': 'desc'});
+    final slugs = [for (final item in liste['member'] as List<dynamic>) item['slug'] as String];
+    final details = await Future.wait(slugs.map((slug) => _get('/articles/$slug')));
+    return [for (final article in details) RadioContent.fromNewsJson(article)];
+  }
+
+  static Future<List<Tag>> getTags() async {
+    final data = await _get('/tags', {'itemsPerPage': '100'});
+    final tags = <Tag>[];
+    for (final item in data['member'] as List<dynamic>) {
+      tags.add(Tag(slug: item['slug'] as String, nom: item['name'] as String));
+    }
+    tags.sort((a, b) => a.nom.toLowerCase().compareTo(b.nom.toLowerCase()));
+    return tags;
+  }
+
+  static Future<ShowDetails> getShow(String slug) async {
+    final data = await _get('/shows/$slug');
+    return ShowDetails(
+      slug: data['slug'] as String,
+      titre: data['title'] as String,
+      imageUrl: _imageUrl(data['imageUrl']),
+      description: data['content'] as String?,
+    );
   }
 }

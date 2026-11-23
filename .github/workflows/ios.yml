@@ -1,0 +1,44 @@
+# Compile l'app iOS sur un Mac de GitHub (gratuit pour un dépôt public)
+# et produit un fichier .ipa NON signé, à télécharger dans l'onglet Actions.
+# Il se signe et s'installe ensuite sur l'iPhone depuis Linux avec Impactor (Apple ID gratuit).
+name: iOS (ipa non signé)
+
+on:
+  # Bouton "Run workflow" dans l'onglet Actions (visible une fois ce fichier sur la branche par défaut).
+  workflow_dispatch:
+  # Compilation automatique à chaque push sur la branche feat/ios.
+  push:
+    branches: [feat/ios]
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mon_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7 # même version que sur le PC de dev
+          cache: true
+
+      - run: flutter pub get
+
+      # --no-codesign : pas besoin de compte Apple ici, la signature se fait à l'installation.
+      - run: flutter build ios --release --no-codesign
+
+      # Un .ipa n'est qu'un zip contenant le dossier Payload/Runner.app.
+      - name: Fabriquer le .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr RadioCampus.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RadioCampus-ipa
+          path: mon_app/RadioCampus.ipa
+          retention-days: 14

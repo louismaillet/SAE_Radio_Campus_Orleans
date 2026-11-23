@@ -230,7 +230,7 @@ class RadioCard extends StatelessWidget {
                     track: PlayerTrack(
                       url: flux,
                       title: radio.name,
-                      subtitle: 'En direct',
+                      subtitle: radio.slogan ?? 'En direct',
                       isLive: true,
                       artworkUrl: radio.logoUrl,
                       artworkBytes: logo,

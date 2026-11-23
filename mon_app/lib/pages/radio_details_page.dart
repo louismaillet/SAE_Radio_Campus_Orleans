@@ -163,7 +163,7 @@ PlayerTrack? _trackDirect(CampusRadio radio, _Donnees donnees, RadioPalette pale
   return PlayerTrack(
     url: flux,
     title: radio.name,
-    subtitle: donnees.details?.catchPhrase ?? 'En direct',
+    subtitle: donnees.details?.catchPhrase ?? radio.slogan ?? 'En direct',
     isLive: true,
     artworkUrl: radio.logoUrl,
     artworkBytes: donnees.reglages.logo,

@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app import models  # noqa: F401  (enregistre les tables dans Base.metadata)
 from app.config import settings
 from app.database import Base, engine
+from app.push import init_firebase
 from app.routers import auth, devices, posts, radios
 
 
@@ -16,6 +17,7 @@ async def lifespan(_: FastAPI):
     # passer à Alembic dès que le schéma devra évoluer sans perte de données.
     Base.metadata.create_all(bind=engine)
     settings.MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    init_firebase()
     yield
 
 

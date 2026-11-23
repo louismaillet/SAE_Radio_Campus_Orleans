@@ -27,6 +27,7 @@ services:
     volumes:
       - ./app:/app/app        # code monté : --reload voit les modifications
       - ./media:/app/media    # images uploadées, persistées sur l'hôte
+      - ./secrets:/app/secrets:ro  # clé Firebase (lecture seule, jamais commitée)
     ports:
       - "8000:8000"
     depends_on:

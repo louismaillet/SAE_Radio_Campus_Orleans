@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints
 
 HexColor = Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$", examples=["#E30613"])]
 
@@ -67,14 +67,51 @@ class PostOut(ORMModel):
 
 
 # ---------- Appareils ----------
-class DeviceRegister(BaseModel):
-    push_endpoint_url: str = Field(min_length=1, max_length=1000)
-    platform: Literal["android", "ios", "web"]
+class DeviceUpsert(BaseModel):
+    push_token: str = Field(min_length=1, max_length=4096)
+    platform: Literal["android", "ios"] = "android"
+    # Slug de la radio suivie ; null = ne plus recevoir de notifications.
+    # Obligatoire (même à null) pour ne pas désabonner par oubli.
+    radio_slug: str | None
 
 
 class DeviceOut(ORMModel):
-    id: int
-    user_id: int
-    push_endpoint_url: str
+    push_token: str
     platform: str
+    radio_slug: str | None
+    created_at: datetime
     updated_at: datetime
+
+
+# ---------- Notifications ----------
+# Texte brut ; les espaces autour sont retirés, un texte vide est refusé
+NotificationTitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)
+]
+NotificationBody = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)
+]
+
+
+class NotificationCreate(BaseModel):
+    title: NotificationTitle
+    body: NotificationBody
+
+
+class NotificationOut(ORMModel):
+    id: int
+    radio_id: int
+    sender_id: int | None
+    title: str
+    body: str
+    created_at: datetime
+    recipients_count: int
+    # null tant que l'envoi est en cours
+    success_count: int | None
+
+
+class NotificationHistory(BaseModel):
+    daily_limit: int
+    remaining_today: int
+    subscribers_count: int
+    notifications: list[NotificationOut]

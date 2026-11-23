@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     MEDIA_URL_PREFIX: str = "/media"
     MAX_UPLOAD_SIZE_MB: int = 5
 
+    # Clé du compte de service Firebase (JSON). Absente = notifications simulées (logs).
+    FIREBASE_CREDENTIALS: Path | None = None
+    # Nombre max de notifications par radio sur 24 h glissantes
+    NOTIFICATIONS_PER_DAY: int = 5
+
 
 @lru_cache
 def get_settings() -> Settings:

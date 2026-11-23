@@ -86,11 +86,20 @@ curl -X DELETE localhost:8000/radios/radio-campus-orleans/logo -H "Authorization
 # Lister les posts
 curl localhost:8000/posts
 
-# Enregistrer un appareil pour les notifications
-curl -X POST localhost:8000/devices/register -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"push_endpoint_url":"https://exemple.org/endpoint","platform":"android"}'
+# Abonner un appareil aux notifications d'une radio (sans compte)
+curl -X PUT localhost:8000/devices -H "Content-Type: application/json" \
+  -d '{"push_token":"jeton-fcm-de-test","platform":"android","radio_slug":"radio-campus-orleans"}'
+
+# Envoyer une notification aux abonnés (admin de la radio uniquement, 5 par jour)
+curl -X POST localhost:8000/radios/radio-campus-orleans/notifications \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"title":"Concert ce soir","body":"Rendez-vous à 20 h au campus"}'
+
+# Historique, envois restants aujourd'hui, nombre d'abonnés
+curl localhost:8000/radios/radio-campus-orleans/notifications -H "Authorization: Bearer $TOKEN"
 ```
+
+Sans clé Firebase, l'envoi est simulé : il apparaît dans `docker compose logs -f api` (`[notification simulée] ...`).
 
 Dans Swagger (`/docs`) : bouton **Authorize**, avec le nom d'utilisateur dans `username`.
 
@@ -110,7 +119,12 @@ Dans Swagger (`/docs`) : bouton **Authorize**, avec le nom d'utilisateur dans `u
 | GET | `/posts/{id}` | non | Un post |
 | POST | `/posts` | oui | Créer (multipart : `title`, `content`, `image` optionnel) |
 | DELETE | `/posts/{id}` | oui | Supprimer (auteur uniquement) |
-| POST | `/devices/register` | oui | Enregistrer/mettre à jour un endpoint push |
+| POST | `/radios/{slug}/notifications` | admin de la radio | Envoyer une notification aux abonnés (`title` ≤ 100, `body` ≤ 500). 202, ou 429 au-delà de 5 par 24 h |
+| GET | `/radios/{slug}/notifications` | admin de la radio | Historique (`?limit=20`), `remaining_today`, `subscribers_count` |
+| GET | `/radios/{slug}/subscribers/count` | admin de la radio | Nombre d'appareils abonnés |
+| PUT | `/devices` | non | Abonner l'appareil à une radio (`push_token`, `platform`, `radio_slug`, `null` = se désabonner) |
+| GET | `/devices/{push_token}` | non | Radio suivie par l'appareil |
+| DELETE | `/devices/{push_token}` | non | Oublier l'appareil |
 | GET | `/media/<fichier>` | non | Image uploadée |
 
 Images : JPEG, PNG, WebP, GIF, 5 Mo max (`MAX_UPLOAD_SIZE_MB`).
@@ -152,7 +166,29 @@ Envoyés avec `PUT /radios/{slug}/logo`, puis traités par le serveur (`app/medi
 | `password` | text | **Hash bcrypt**, jamais le mot de passe en clair |
 | `name` | text, unique | Nom d'utilisateur (sert à la connexion) |
 
-Plus `posts` et `user_devices` (notifications push).
+**`devices`** (appareils abonnés aux notifications ; les auditeurs n'ont pas de compte)
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `id` | int8 | Clé primaire |
+| `push_token` | text, unique | Jeton FCM de l'appareil |
+| `platform` | text | `android` (iOS plus tard) |
+| `radio` | int8 → `radios.id` | Radio suivie (null = aucune). Une seule radio par appareil |
+| `created_at`, `updated_at` | timestamptz | |
+
+**`notifications`** (historique des envois, sert aussi à la limite de 5 par jour)
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `id` | int8 | Clé primaire |
+| `radio_id` | int8 → `radios.id` | Radio émettrice |
+| `sender_id` | int8 → `users.id` | Gérant qui a envoyé (null s'il a été supprimé) |
+| `title`, `body` | text | Texte brut, 100 et 500 caractères max |
+| `created_at` | timestamptz | Date d'envoi |
+| `recipients_count` | int | Appareils visés |
+| `success_count` | int | Appareils atteints, rempli à la fin de l'envoi (null = en cours) |
+
+Plus `posts`.
 
 ### Créer une radio et son admin
 
@@ -223,10 +259,52 @@ radio['logo_url'] != null
 - Sans `contentType` explicite, l'image part en `application/octet-stream` et l'API répond **415**.
 - Téléphone Android réel en HTTP : ajouter `android:usesCleartextTraffic="true"` dans `AndroidManifest.xml`.
 
+## 8. Notifications push (Firebase Cloud Messaging)
+
+Fonctionnement :
+
+1. L'app récupère son jeton FCM et appelle `PUT /devices` avec la radio choisie (au démarrage, quand le jeton change, quand l'auditeur appuie sur la cloche).
+2. Le gérant envoie `POST /radios/{slug}/notifications`. L'API répond **202** tout de suite et envoie en tâche de fond (`app/push.py`), par lots de 500 jetons.
+3. Les appareils dont le jeton est rejeté (app désinstallée) sont supprimés de `devices`, puis `success_count` est rempli.
+
+Chaque notification contient les données `radio_slug` et `notification_id` : l'app s'en sert pour ouvrir la bonne radio au clic.
+
+### Configurer Firebase
+
+Sans clé, tout fonctionne mais les envois sont seulement écrits dans les logs. Pour envoyer pour de vrai :
+
+1. Console Firebase → ⚙️ **Paramètres du projet** → **Comptes de service** → **Générer une nouvelle clé privée**.
+2. Ranger le fichier téléchargé :
+   ```bash
+   mv ~/Téléchargements/<projet>-firebase-adminsdk-*.json backend/secrets/firebase.json
+   ```
+3. Dans `.env`, ajouter :
+   ```
+   FIREBASE_CREDENTIALS=/app/secrets/firebase.json
+   ```
+4. `docker compose up -d` (redémarre l'API). Les logs doivent afficher « Firebase initialisé ».
+
+`backend/secrets/` est monté en lecture seule dans le conteneur et ignoré par git. **Ne jamais commiter la clé** : elle permet d'envoyer des notifications à tous les utilisateurs. Vérifier avec `git status` qu'elle n'apparaît pas.
+
+La limite d'envois se règle avec `NOTIFICATIONS_PER_DAY` dans `.env` (5 par défaut).
+
+## 9. Tests
+
+Sans Docker ni Firebase (SQLite en mémoire, envoi FCM remplacé par un faux) :
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pytest
+```
+
 ## Dépannage
 
 | Problème | Cause / solution |
 |---|---|
+| Table `user_devices` encore présente après la mise à jour des notifications | Ancienne table remplacée par `devices`, inutilisée : `DROP TABLE user_devices;` dans psql, ou `docker compose down -v` pour repartir de zéro |
+| L'API ne démarre pas : `FIREBASE_CREDENTIALS pointe vers ...` | La variable est dans `.env` mais `backend/secrets/firebase.json` manque : ajouter la clé ou commenter la ligne |
+| 429 sur l'envoi de notification | Limite de 5 envois sur 24 h glissantes atteinte pour cette radio |
 | `port is already allocated` (8000) | Un autre service utilise le port : l'arrêter ou changer `8000:8000` dans `docker-compose.yml` |
 | Erreur de colonne inconnue après une mise à jour du schéma | Les tables ne sont créées qu'une fois : `docker compose down -v` puis relancer (efface les données) |
 | L'API ne démarre pas, erreur de connexion à la base | Regarder `docker compose logs db`. Si le mot de passe de `.env` a changé après le 1er lancement : `docker compose down -v` puis relancer |

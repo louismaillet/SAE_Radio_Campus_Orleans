@@ -7,6 +7,7 @@ pydantic-settings==2.7.1
 python-multipart==0.0.20
 Pillow==11.0.0
 PyJWT==2.10.1
+firebase-admin==7.7.0
 passlib[bcrypt]==1.7.4
 # passlib n'est plus maintenu : bcrypt >= 4.1 casse sa détection de version
 bcrypt==4.0.1

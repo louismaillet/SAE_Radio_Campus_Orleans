@@ -2,6 +2,8 @@
 
 Document de reprise : à relire avant de coder.
 
+> **État (23/11/2026)** : backend terminé et testé (`tests/`, 20 tests). Firebase configuré (projet `radio-campus-a4b2f`). Reste l'app Flutter.
+
 ## Objectif
 
 1. Un auditeur ouvre l'app (**sans compte**), choisit une radio et s'y **abonne**. **Une seule radio par appareil** ; en choisir une autre remplace la précédente.
@@ -98,13 +100,13 @@ Logique de `POST /radios/{slug}/notifications` :
 
 ## Configuration
 
-- [ ] `requirements.txt` : `firebase-admin` (version fixée).
-- [ ] `app/config.py` : `FIREBASE_CREDENTIALS: Path | None = None`.
-- [ ] `.env.example` : `FIREBASE_CREDENTIALS=/app/secrets/firebase.json` (commenté).
-- [ ] `docker-compose.yml` : volume `./secrets:/app/secrets:ro` sur `api`.
-- [ ] `.gitignore` + `.dockerignore` : `secrets/`.
-- [ ] Changement de schéma → rappeler `docker compose down -v`.
-- [ ] `backend.md` : nouvelles routes, tables, section « Configurer Firebase ».
+- [x] `requirements.txt` : `firebase-admin` (version fixée).
+- [x] `app/config.py` : `FIREBASE_CREDENTIALS: Path | None = None`.
+- [x] `.env.example` : `FIREBASE_CREDENTIALS=/app/secrets/firebase.json` (commenté).
+- [x] `docker-compose.yml` : volume `./secrets:/app/secrets:ro` sur `api`.
+- [x] `.gitignore` + `.dockerignore` : `secrets/`.
+- [x] Changement de schéma → rappeler `docker compose down -v`.
+- [x] `backend.md` : nouvelles routes, tables, section « Configurer Firebase ».
 
 ## Configuration Firebase (à faire par l'utilisateur, ce soir)
 
@@ -191,21 +193,21 @@ Console Firebase → **Messaging** → **Nouvelle campagne** → **Notifications
 
 ### Récapitulatif
 
-- [ ] Étape 0 : `applicationId` choisi (ou `com.example.mon_app` gardé pour l'instant)
-- [ ] Étape 1 : `firebase` et `flutterfire` installés et connectés
-- [ ] Étape 2 : `flutterfire configure` lancé, `flutter build apk --debug` OK
-- [ ] Étape 3 : API Cloud Messaging V1 activée
-- [ ] Étape 4 : `backend/secrets/firebase.json` présent et **absent de `git status`**
+- [x] Étape 0 : `applicationId` = `fr.radiocampusorleans.app`
+- [x] Étape 1 : `firebase` et `flutterfire` installés et connectés
+- [x] Étape 2 : `flutterfire configure` lancé (projet `radio-campus-a4b2f`), `flutter build apk --debug` OK (Flutter 3.47.9)
+- [x] Étape 3 : API Cloud Messaging V1 activée (vérifié par un envoi `dry_run`)
+- [x] Étape 4 : `backend/secrets/firebase.json` présent et **absent de `git status`**
 - [ ] Étape 5 : coéquipiers ajoutés (optionnel)
 - [ ] Étape 6 : message test reçu (après le code)
 
 ## Tests à écrire (venv scratchpad, SQLite, TestClient, `send_push` remplacé par un faux)
 
-- [ ] `PUT /devices` : création, changement de radio (remplace), `radio_slug: null`, slug inconnu → 404, même jeton deux fois → une seule ligne.
-- [ ] Envoi : non connecté → 401, non-admin → 403, admin d'une autre radio → 403.
-- [ ] Seuls les appareils de **cette** radio sont visés (abonnés à une autre radio exclus).
-- [ ] 6e envoi dans la journée → 429 ; un envoi vieux de plus de 24 h ne compte plus.
-- [ ] Jeton invalide renvoyé par le faux `send_push` → appareil supprimé ; `success_count` mis à jour.
+- [x] `PUT /devices` : création, changement de radio (remplace), `radio_slug: null`, slug inconnu → 404, même jeton deux fois → une seule ligne.
+- [x] Envoi : non connecté → 401, non-admin → 403, admin d'une autre radio → 403.
+- [x] Seuls les appareils de **cette** radio sont visés (abonnés à une autre radio exclus).
+- [x] 6e envoi dans la journée → 429 ; un envoi vieux de plus de 24 h ne compte plus.
+- [x] Jeton invalide renvoyé par le faux `send_push` → appareil supprimé ; `success_count` mis à jour.
 
 ## App Flutter (à brancher ensuite)
 

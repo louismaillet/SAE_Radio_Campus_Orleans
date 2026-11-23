@@ -4,4 +4,5 @@ media/*
 __pycache__/
 *.pyc
 .venv/
-secrets/
+secrets/*
+!secrets/.gitkeep

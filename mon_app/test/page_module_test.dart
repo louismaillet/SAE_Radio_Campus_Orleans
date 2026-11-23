@@ -25,7 +25,7 @@ void main() {
   });
 
   test('modules par défaut', () {
-    expect(modulesParDefaut().map((m) => m.type), [ModuleType.direct, ModuleType.replays, ModuleType.actualites]);
+    expect(modulesParDefaut().map((m) => m.type), [ModuleType.replays, ModuleType.actualites]);
   });
 
   test('nombreDe borne', () {
@@ -44,7 +44,7 @@ void main() {
       'couleur': null,
     });
     expect(reglages.modules, isNull);
-    expect(reglages.modulesEffectifs.length, 3);
+    expect(reglages.modulesEffectifs.length, 2);
   });
 
   test('RadioSettings garde l\'ordre des modules', () {

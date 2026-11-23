@@ -62,9 +62,9 @@ class PageModule {
   }
 }
 
-// Page d'une radio jamais configurée : à peu près l'ancienne page fixe.
+// Page d'une radio jamais configurée : l'ancienne page fixe.
+// Pas de module Direct : le direct reste dans l'en-tête tant que le gérant n'en place pas un.
 List<PageModule> modulesParDefaut() => [
-  PageModule.nouveau(ModuleType.direct),
   PageModule.nouveau(ModuleType.replays),
   PageModule.nouveau(ModuleType.actualites),
 ];

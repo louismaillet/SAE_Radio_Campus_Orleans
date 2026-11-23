@@ -46,6 +46,8 @@ class _AccueilPageState extends State<AccueilPage> {
   double? _distanceKm; // renseignée quand la ville vient de la géolocalisation
   bool _localisationEnCours = false;
   String? _messagePosition;
+  // Bouton vers les réglages sous le message : localisation du téléphone (true), permission de l'app (false).
+  bool? _reglagesLocalisation;
 
   @override
   void dispose() {
@@ -62,6 +64,7 @@ class _AccueilPageState extends State<AccueilPage> {
       _selection = ville;
       _distanceKm = km;
       _messagePosition = null;
+      _reglagesLocalisation = null;
     });
     // On ouvre un peu le panneau pour montrer la confirmation.
     if (_panneau.isAttached && _panneau.size < _panneauChoix) {
@@ -73,6 +76,7 @@ class _AccueilPageState extends State<AccueilPage> {
     setState(() {
       _localisationEnCours = true;
       _messagePosition = null;
+      _reglagesLocalisation = null;
     });
     final resultat = await widget.localisateur.position();
     if (!mounted) return;
@@ -83,12 +87,20 @@ class _AccueilPageState extends State<AccueilPage> {
         if (proche != null) {
           _choisirVille(proche.ville, km: proche.km);
         }
-      case PositionRefusee():
-        setState(() => _messagePosition = 'Position refusée. Choisis ta ville sur la carte ou avec la recherche.');
-      case PositionIndisponible():
-        setState(
-          () => _messagePosition = "Impossible d'obtenir ta position. Choisis ta ville sur la carte ou avec la recherche.",
-        );
+      case PositionRefusee(:final definitif):
+        setState(() {
+          _messagePosition = definitif
+              ? "L'accès à ta position est bloqué. Autorise-le dans les réglages, ou choisis ta ville sur la carte."
+              : 'Position refusée. Choisis ta ville sur la carte ou avec la recherche.';
+          _reglagesLocalisation = definitif ? false : null;
+        });
+      case PositionIndisponible(:final serviceDesactive):
+        setState(() {
+          _messagePosition = serviceDesactive
+              ? 'La localisation de ton téléphone est coupée. Active-la, ou choisis ta ville sur la carte.'
+              : "Impossible d'obtenir ta position. Choisis ta ville sur la carte ou avec la recherche.";
+          _reglagesLocalisation = serviceDesactive ? true : null;
+        });
     }
   }
 
@@ -313,6 +325,15 @@ class _AccueilPageState extends State<AccueilPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(_messagePosition!, style: textes.bodyMedium!.copyWith(color: scheme.onSurfaceVariant)),
+                ),
+              if (_reglagesLocalisation != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => widget.localisateur.ouvrirReglages(localisation: _reglagesLocalisation!),
+                    icon: const Icon(Icons.settings_rounded),
+                    label: const Text('Ouvrir les réglages'),
+                  ),
                 ),
               if (_selection != null) _confirmation(context, _selection!),
               if (lointaines.isNotEmpty) ...[

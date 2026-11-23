@@ -20,6 +20,11 @@ class _LocalisateurFactice implements Localisateur {
 
   @override
   Future<ResultatPosition> position() async => resultat;
+
+  bool? reglagesOuverts;
+
+  @override
+  Future<void> ouvrirReglages({required bool localisation}) async => reglagesOuverts = localisation;
 }
 
 Future<void> _afficher(WidgetTester tester, {Future<List<CampusRadio>>? radios, Localisateur? localisateur}) async {
@@ -97,6 +102,30 @@ void main() {
       find.ancestor(of: find.text('Utiliser ma position'), matching: find.bySubtype<ButtonStyleButton>()),
     );
     expect(bouton.enabled, isTrue);
+  });
+
+  testWidgets('refus définitif : message et bouton vers les réglages de l\'app', (tester) async {
+    final localisateur = _LocalisateurFactice(PositionRefusee(definitif: true));
+    await _afficher(tester, localisateur: localisateur);
+    await tester.tap(find.text('Utiliser ma position'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.textContaining('bloqué'), findsOneWidget);
+    // Le bouton peut être sous le bord du panneau : on l'actionne directement.
+    tester.widget<ButtonStyleButton>(find.ancestor(of: find.text('Ouvrir les réglages'), matching: find.bySubtype<ButtonStyleButton>())).onPressed!();
+    expect(localisateur.reglagesOuverts, isFalse);
+  });
+
+  testWidgets('localisation coupée : bouton vers les réglages de localisation', (tester) async {
+    final localisateur = _LocalisateurFactice(PositionIndisponible('coupée', serviceDesactive: true));
+    await _afficher(tester, localisateur: localisateur);
+    await tester.tap(find.text('Utiliser ma position'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.textContaining('est coupée'), findsOneWidget);
+    // Le bouton peut être sous le bord du panneau : on l'actionne directement.
+    tester.widget<ButtonStyleButton>(find.ancestor(of: find.text('Ouvrir les réglages'), matching: find.bySubtype<ButtonStyleButton>())).onPressed!();
+    expect(localisateur.reglagesOuverts, isTrue);
   });
 
   testWidgets('position indisponible affiche le message', (tester) async {
